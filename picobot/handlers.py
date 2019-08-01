@@ -1,10 +1,13 @@
 import logging
 import dataset
+from telegram.ext import Updater
+from telegram import Bot, Update
 
 from functools import wraps
 
 from .config import CREATOR_ID, DB_PATH
-import responses
+from picobot import responses
+from .painter import sticker_from_text
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
@@ -48,15 +51,22 @@ def new_pack(bot, update):
         update.message.reply_text(f'{responses.PACK_CREATED}: {pack_number}')
 
 
-def create_pack(name: str) -> int:
-    pack_number = 0
-    # send msg to @Stickers creating pack
-    return pack_number
+def create_pack(bot: Bot, update: Update):
+    user_id = update.message.from_user.id
+    title = update.message.text.split(' ')[1]
+    name = title + '_by_HitchhikersBot'
+    png_sticker = open('qqer.png', 'rb')
+    emojis = update.message.text.split(' ')[2]
+
+    # Create Pack
+    if bot.create_new_sticker_set(user_id=user_id, name=name, title=title, png_sticker=png_sticker, emojis=emojis):
+        sticker = bot.get_sticker_set(name).stickers[0]
+        update.message.reply_sticker(sticker)
 
 
-def add_sticker(bot, update):
-    msg_type = ''
-    response = ''
+def add_sticker(bot, update: Update):
+    msg_type = 'MSG_TYPE.TEXT'
+    response = 'oopsie'
     # check if it's image, file, text, or sticker
     if msg_type == 'MSG_TYPE.IMAGE':
         # check if format of msg is right
@@ -69,9 +79,13 @@ def add_sticker(bot, update):
         response = 'NOT IMPLEMENTED'
     elif msg_type == 'MSG_TYPE.TEXT':
         # check if format of msg is right
+        username = update.message.reply_to_message.forward_from.full_name
+        text = update.message.reply_to_message.text
+        response = username + '\n' + text
         # save as png
+        sticker_from_text(username, text)
+        update.message.reply_photo(photo=open('qqer.png', 'rb'))
         # send to @Stickers
-        response = 'NOT IMPLEMENTED'
     elif msg_type == 'MSG_TYPE.STICKER':
         # check if format of msg is right
         # save as png

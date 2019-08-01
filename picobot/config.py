@@ -16,4 +16,4 @@ except FileNotFoundError:
 
 TOKEN = config['token']
 DB_PATH = config.get('db_path', CONFIG_DIR / 'bot.db')
-CREATOR_ID = config.get('creator_id', 61407387)
+CREATOR_ID = config.get('creator_id', 206454394)
