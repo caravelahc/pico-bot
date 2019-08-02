@@ -1,7 +1,9 @@
 import json
 
-from os import environ
+from os import environ, path
 from pathlib import Path
+
+ROOT_DIR = path.dirname(path.abspath(__file__))
 
 try:
     CONFIG_DIR = Path(environ['XDG_CONFIG_HOME'], 'picobot')

@@ -1,11 +1,21 @@
 from PIL import Image, ImageDraw, ImageFont
+from .config import ROOT_DIR
+
+# for testing purpose only
+# ROOT_DIR = '/home/diogo/Documents/CCO/Python/pico-bot/picobot'
+
+IMG_DIR = ROOT_DIR + '/images/'
+IMG_NAME = 'img'
 
 AVATAR_SIZE = 36
+MARGIN = 4
 PADDING = 10
 MSG_PADDING_H = 12
 MSG_PADDING_V = 8
+TIME_PADDING = 16
 BOX_HEIGHT = 50
-BOX_WIDTH = 260
+BOX_MIN_WIDTH = 160
+BOX_MAX_WIDTH = 430
 BOX_RADIUS = 10
 BOX_COLOR = "#182533"
 FONT_SIZE = 14
@@ -15,7 +25,7 @@ TIME_COLOR = "#6A7B8C"
 LINE_HEIGHT = 12
 
 
-def draw_round_rectangle(
+def draw_balloon(
     img_draw: ImageDraw.Draw, xy: list, fill=None, width=0,
     outline=None, radius=0
 ):
@@ -93,30 +103,50 @@ def draw_time(
 def draw_avatar(img_draw: ImageDraw.ImageDraw, avatar):
     y0 = BOX_HEIGHT + PADDING - AVATAR_SIZE
     y1 = BOX_HEIGHT + PADDING
-    xy = [PADDING, y0, PADDING + AVATAR_SIZE, y1]
+    xy = [MARGIN, y0, MARGIN + AVATAR_SIZE, y1]
     img_draw.ellipse(xy)
 
 
-def sticker_from_text(username: str, text: str, avatar=""):
+def sticker_from_text(user_id: int, username: str, text: str, avatar=""):
     size = (512, 2 * PADDING + BOX_HEIGHT)
     transparent = (0, 0, 0, 0)
+
+    FONT_DIR = ROOT_DIR + '/fonts/'
+    bold_font = ImageFont.truetype(font=f"{FONT_DIR}OpenSans-Bold.ttf", size=13)
+    font = ImageFont.truetype(font=f"{FONT_DIR}OpenSans-Regular.ttf", size=13)
+
+    aux_text = username if (len(username) >= len(text)) else text
+    aux_text += '88:88'
+    aux_font = bold_font if (len(username) >= len(text)) else font
+    aux = ImageDraw.Draw(Image.new('RGBA', size, transparent))
+    box_width = aux.textsize(aux_text, font=aux_font)[0] + 2 * MSG_PADDING_H + TIME_PADDING
+    box_width = max(BOX_MIN_WIDTH, min(box_width, BOX_MAX_WIDTH))
+    img_width = min(512, 2*MARGIN + AVATAR_SIZE + PADDING + box_width)
+    size = (img_width, size[1])
+
     img = Image.new("RGBA", size, transparent)
     dr = ImageDraw.Draw(img)
     draw_avatar(dr, avatar)
 
-    x0 = 2 * PADDING + AVATAR_SIZE
-    x1 = x0 + BOX_WIDTH
+    x0 = MARGIN + PADDING + AVATAR_SIZE
+    x1 = x0 + box_width
     y1 = PADDING + BOX_HEIGHT
     xy = [x0, PADDING, x1, y1]
-    draw_round_rectangle(dr, xy=xy, fill=BOX_COLOR, radius=BOX_RADIUS)
+    draw_balloon(dr, xy=xy, fill=BOX_COLOR, radius=BOX_RADIUS)
 
-    bold_font = ImageFont.truetype(font="fonts/OpenSans-Bold.ttf", size=13)
-    font = ImageFont.truetype(font="fonts/OpenSans-Regular.ttf", size=13)
     draw_username(dr, xy=xy, font=bold_font, username=username)
     draw_message(dr, xy=xy, font=font, text=text)
     draw_time(dr, xy=xy, font=font)
-    img.save("qqer.png")
+
+    ratio = 512 / img_width
+    sample = Image.ANTIALIAS
+    img = img.resize((512, int(ratio * size[1])), resample=sample)
+
+    img_path = IMG_DIR + IMG_NAME + str(user_id) + '.png'
+    img.save(img_path)
+    img.close()
+    return img_path
 
 
 if __name__ == "__main__":
-    sticker_from_text("Joao das Neves", "Oi meus queridos!")
+    sticker_from_text(46, "Tarcísio Eduardo Moreira Crocomo", "Haha")
