@@ -1,9 +1,20 @@
-ERROR_MSG = 'Something went wrong.'
+ERROR_MSG = 'Algo deu errado. Verifique sua mensagem e utilize o comando /help.'
+
+INVALID_MSG = "Mensagem inválida!"
+
+INVALID_DOC = "O arquivo de imagem deve estar em formato PNG \
+com uma camada transparente e caber em um quadrado 512x512 \
+(um dos lados deve ter 512px e o outro 512px ou menos)."
+
+USER_NO_PACK = "Você ainda não tem nenhum pacote de sticker. \
+Por favor, primeiro crie um utilizando o comando /newpack para criar um novo pacote de stickers."
+
+ADDED_STICKER = 'Sticker adicionado!'
 
 GREETING = 'Hello!'
 
 ACCESS_DENIED = """Username is not in the sudoers file.
-    This incident will be reported."""
+This incident will be reported."""
 
 HELP_MSG = """Bot para automatizar a criação de stickers \
     a partir de imagens ou mensagens.

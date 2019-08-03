@@ -1,12 +1,16 @@
 import logging
 import dataset
-from telegram import Bot, Update
+from telegram import Bot, Update, Message
 
 from functools import wraps
 
-from .config import CREATOR_ID, DB_PATH
+from .config import CREATOR_ID, DB_PATH, ROOT_DIR
 from picobot import responses
-from .painter import sticker_from_text
+from .msg_type import MsgType
+from .painter import sticker_from_text, sticker_from_image
+
+IMG_DIR = ROOT_DIR + '/images/'
+IMG_NAME = 'img'
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
@@ -14,7 +18,7 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
-EMOJI = '😁'
+DEFAULT_EMOJI = '😁'
 
 
 def creator_only(func):
@@ -54,55 +58,175 @@ def new_pack(bot, update):
 
 def create_pack(bot: Bot, update: Update):
     user_id = update.message.from_user.id
-    title = update.message.text.split(' ')[1]
-    name = title + '_by_HitchhikersBot'
+    if not check_msg_format(update.message.text):
+        update.message.reply_text(responses.INVALID_MSG)
+    splittext = update.message.text.split()
+    title = splittext[1]
+    name = title + '_by_' + bot.username
     png_sticker = open('images/caravela.png', 'rb')
-    emojis = update.message.text.split(' ')[2]
+    if len(splittext) > 2:
+        emoji = update.message.text.split()[2]
+    else:
+        emoji = DEFAULT_EMOJI
 
     # Create Pack
-    if bot.create_new_sticker_set(user_id=user_id, name=name, title=title, png_sticker=png_sticker, emojis=EMOJI):
+    if bot.create_new_sticker_set(user_id=user_id, name=name, title=title, png_sticker=png_sticker, emojis=emoji):
         sticker = bot.get_sticker_set(name).stickers[0]
         update.message.reply_sticker(sticker)
     png_sticker.close()
 
 
 def add_sticker(bot: Bot, update: Update):
-    msg_type = 'MSG_TYPE.TEXT'
-    response = 'oopsie'
+    msg: Message = update.message
+    msg_type = get_msg_type(msg)
+    response = responses.ERROR_MSG
+
     # check if it's image, file, text, or sticker
-    if msg_type == 'MSG_TYPE.IMAGE':
-        # check if format of msg is right
-        # save as png
-        # send to @Stickers
-        response = 'NOT IMPLEMENTED'
-    elif msg_type == 'MSG_TYPE.FILE':
-        # check if format of msg is right
-        # send to @Stickers
-        response = 'NOT IMPLEMENTED'
-    elif msg_type == 'MSG_TYPE.TEXT':
-        # check if format of msg is right
-        user_id = update.message.from_user.id
-        pack_name = update.message.text.split(' ')[1]
-        emojis = update.message.text.split(' ')[2]
-        username = update.message.reply_to_message.forward_from.full_name
-        text = update.message.reply_to_message.text
+    if msg_type == MsgType.TEXT:
+        if not check_msg_format(msg.text):
+            # TODO: if user has only one pack, use that as default
+            update.message.reply_text(responses.INVALID_MSG)
+            return
+
+        user_id = msg.from_user.id
+        splittext = msg.text.split()
+        pack_name = splittext[1] + '_by_' + bot.username
+        if len(splittext) > 2:
+            emoji = msg.text.split()[2]
+        else:
+            emoji = DEFAULT_EMOJI
+
+        forward = msg.reply_to_message.forward_from
+        if forward is not None:
+            username = forward.first_name
+        else:
+            username = msg.reply_to_message.from_user.first_name
+        text = msg.reply_to_message.text
         # save as png
         img_path = sticker_from_text(user_id, username, text)
         png_sticker = open(img_path, 'rb')
-        if bot.add_sticker_to_set(user_id=user_id, name=pack_name, png_sticker=png_sticker, emojis=emojis):
+        if bot.add_sticker_to_set(user_id=user_id, name=pack_name, png_sticker=png_sticker, emojis=emoji):
             sticker = bot.get_sticker_set(pack_name).stickers[-1]
-            update.message.reply_sticker(sticker)
-            response = 'Sticker adicionado!'
+            msg.reply_sticker(sticker)
+            response = responses.ADDED_STICKER
         png_sticker.close()
-    elif msg_type == 'MSG_TYPE.STICKER':
+
+    elif msg_type == MsgType.PHOTO:
+        if add_photo(bot, msg, False):
+            response = responses.ADDED_STICKER
+    elif msg_type == MsgType.REP_PHOTO:
+        if add_photo(bot, msg, True):
+            response = responses.ADDED_STICKER
+
+    elif msg_type == MsgType.DOCUMENT:
+        # check if format of msg is right
+        # send result
+        pass
+
+    elif msg_type == MsgType.STICKER:
         # check if format of msg is right
         # save as png
         # send to @Stickers
-        response = 'NOT IMPLEMENTED'
+        pass
 
     # check if there is any error
 
     update.message.reply_text(response)
+
+
+def caption_handler(bot: Bot, update: Update):
+    text = update.message.caption
+    if not check_msg_format(text):
+        # TODO: if user has only one pack, use that as default
+        update.message.reply_text(responses.INVALID_MSG)
+        return
+    if text.split()[0] == '/addsticker':
+        update.message.text = text
+        add_sticker(bot, update)
+
+
+def check_msg_format(text: str):
+    return text is not None and len(text.split()) > 1
+
+
+@creator_only
+def check_msg_type(bot: Bot, update: Update):
+    msg_type = get_msg_type(update.message)
+    if msg_type is None:
+        update.message.reply_text(responses.INVALID_MSG)
+        handler_help(bot, update)
+    else:
+        update.message.reply_text(msg_type.name)
+
+
+def get_msg_type(message: Message):
+    replied = False
+    if message.reply_to_message is not None:
+        replied = True
+        message = message.reply_to_message
+
+    if message.photo is not None and len(message.photo) > 0:
+        msg_type = MsgType.PHOTO
+    elif message.sticker is not None:
+        msg_type = MsgType.STICKER
+    elif message.document is not None:
+        msg_type = MsgType.DOCUMENT
+    elif message.text is not None:
+        return MsgType.TEXT if replied else None
+
+    if replied:
+        return MsgType(msg_type * 10)
+    else:
+        return msg_type
+
+
+def add_photo(bot: Bot, msg: Message, replied: bool):
+    user_id = msg.from_user.id
+    splittext = msg.text.split()
+    pack_name = splittext[1] + '_by_' + bot.username
+    if len(splittext) > 2:
+        emoji = msg.text.split()[2]
+    else:
+        emoji = DEFAULT_EMOJI
+    if replied:
+        photo = msg.reply_to_message.photo[-1]
+    else:
+        photo = msg.photo[-1]
+    img_path = IMG_DIR + IMG_NAME + str(user_id) + '.jpg'
+    try:
+        bot.get_file(photo.file_id).download(custom_path=img_path)
+        # resize and save as png
+        img_path = sticker_from_image(img_path)
+        png_sticker = open(img_path, 'rb')
+        bot.add_sticker_to_set(user_id=user_id, name=pack_name, png_sticker=png_sticker, emojis=emoji)
+        sticker = bot.get_sticker_set(pack_name).stickers[-1]
+        msg.reply_sticker(sticker)
+    except Exception:
+        return False
+    return True
+
+
+def add_document(bot: Bot, msg: Message, replied: bool):
+    user_id = msg.from_user.id
+    splittext = msg.text.split()
+    pack_name = splittext[1] + '_by_' + bot.username
+    if len(splittext) > 2:
+        emoji = msg.text.split()[2]
+    else:
+        emoji = DEFAULT_EMOJI
+    if replied:
+        doc = msg.reply_to_message.document
+    else:
+        doc = msg.document
+
+    try:
+        bot.add_sticker_to_set(user_id=user_id, name=pack_name, png_sticker=doc.file_id, emojis=emoji)
+        sticker = bot.get_sticker_set(pack_name).stickers[-1]
+        msg.reply_sticker(sticker)
+    except Exception:
+        msg.reply_text(responses.INVALID_DOC)
+        return False
+    return True
 
 
 def del_sticker(bot, update):

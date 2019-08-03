@@ -1,4 +1,4 @@
-from telegram.ext import Updater, CommandHandler  # , MessageHandler, Filters
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 
 from picobot import handlers
 from .config import TOKEN
@@ -17,6 +17,9 @@ def main():
     dp.add_handler(CommandHandler('addsticker', handlers.add_sticker))
     dp.add_handler(CommandHandler('newpack', handlers.create_pack))
     dp.add_handler(CommandHandler('help', handlers.handler_help))
+    dp.add_handler(CommandHandler('check', handlers.check_msg_type))
+    media_filter = (Filters.photo | Filters.document) & (~ Filters.reply)
+    dp.add_handler(MessageHandler(filters=media_filter, callback=handlers.caption_handler))
 
     updater.start_polling()
     updater.idle()

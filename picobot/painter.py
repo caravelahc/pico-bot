@@ -148,5 +148,19 @@ def sticker_from_text(user_id: int, username: str, text: str, avatar=""):
     return img_path
 
 
+def sticker_from_image(jpg_path: str):
+    img: Image = Image.open(jpg_path)
+    if img.width >= img.height:
+        ratio = 512 / img.width
+        img = img.resize((512, int(ratio * img.height)), resample=Image.ANTIALIAS)
+    else:
+        ratio = 512 / img.height
+        img = img.resize((int(ratio * img.width), 512), resample=Image.ANTIALIAS)
+    img_path = jpg_path[0:-4] + '.png'
+    img.save(img_path)
+    img.close()
+    return img_path
+
+
 if __name__ == "__main__":
     sticker_from_text(46, "Tarcísio Eduardo Moreira Crocomo", "Haha")
