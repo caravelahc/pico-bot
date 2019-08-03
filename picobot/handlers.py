@@ -119,17 +119,17 @@ def add_sticker(bot: Bot, update: Update):
             response = responses.ADDED_STICKER
 
     elif msg_type == MsgType.DOCUMENT:
-        # check if format of msg is right
-        # send result
-        pass
+        if add_document(bot, msg, False):
+            response = responses.ADDED_STICKER
+    elif msg_type == MsgType.REP_DOCUMENT:
+        if add_document(bot, msg, True):
+            response = responses.ADDED_STICKER
 
-    elif msg_type == MsgType.STICKER:
-        # check if format of msg is right
-        # save as png
-        # send to @Stickers
-        pass
+    elif msg_type in [MsgType.STICKER, MsgType.REP_STICKER]:
+        if insert_sticker_in_pack(bot, msg):
+            response = responses.ADDED_STICKER
 
-    # check if there is any error
+    # check for errors
 
     update.message.reply_text(response)
 
@@ -229,9 +229,26 @@ def add_document(bot: Bot, msg: Message, replied: bool):
     return True
 
 
+def insert_sticker_in_pack(bot: Bot, msg: Message):
+    user_id = msg.from_user.id
+    splittext = msg.text.split()
+    pack_name = splittext[1] + '_by_' + bot.username
+    if len(splittext) > 2:
+        emoji = msg.text.split()[2]
+    else:
+        emoji = DEFAULT_EMOJI
+    sticker_id = msg.reply_to_message.sticker.file_id
+
+    try:
+        bot.add_sticker_to_set(user_id=user_id, name=pack_name, png_sticker=sticker_id, emojis=emoji)
+    except Exception:
+        msg.reply_text(responses.INVALID_DOC)
+        return False
+    return True
+
+
 def del_sticker(bot, update):
     # check format of msg
-    # send to @Stickers
     update.message.reply_text('NOT IMPLEMENTED')
 
 

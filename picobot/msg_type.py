@@ -7,5 +7,5 @@ class MsgType(IntEnum):
     DOCUMENT = 3
     STICKER = 4
     REP_PHOTO = 20
-    REP_DOCUMENTO = 30
+    REP_DOCUMENT = 30
     REP_STICKER = 40
