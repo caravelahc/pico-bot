@@ -1,11 +1,12 @@
 from PIL import Image, ImageDraw, ImageFont
-from .config import ROOT_DIR
+# from .config import ROOT_DIR
 
 # for testing purpose only
-# ROOT_DIR = '/home/diogo/Documents/CCO/Python/pico-bot/picobot'
+ROOT_DIR = '/home/diogo/Documents/CCO/Python/pico-bot/picobot'
 
 IMG_DIR = ROOT_DIR + '/images/'
 IMG_NAME = 'img'
+AVATAR_MASK_NAME = 'avatar_mask.png'
 
 AVATAR_SIZE = 36
 MARGIN = 4
@@ -100,14 +101,29 @@ def draw_time(
     txt_draw.text((x0, y0), text, font=font, fill=TIME_COLOR)
 
 
-def draw_avatar(img_draw: ImageDraw.ImageDraw, avatar):
+def draw_avatar(img, avatar_path: str):
     y0 = BOX_HEIGHT + PADDING - AVATAR_SIZE
     y1 = BOX_HEIGHT + PADDING
     xy = [MARGIN, y0, MARGIN + AVATAR_SIZE, y1]
-    img_draw.ellipse(xy)
+    box = tuple(a-2 for a in xy[0:2])
+    if avatar_path == '':
+        return
+    size = AVATAR_SIZE + 4
+    avatar = Image.open(avatar_path).convert(mode='RGBA')
+    if avatar.width >= avatar.height:
+        ratio = size / avatar.width
+        avatar = avatar.resize((size, int(ratio * avatar.height)), resample=Image.ANTIALIAS)
+    else:
+        ratio = size / avatar.height
+        avatar = avatar.resize((int(ratio * avatar.width), size), resample=Image.ANTIALIAS)
+
+    avatar_mask = generate_avatar_mask(img.size)
+    tmp = Image.new('RGBA', img.size)
+    tmp.paste(avatar, box=box)
+    img.paste(tmp, mask=avatar_mask)
 
 
-def sticker_from_text(user_id: int, username: str, text: str, avatar=""):
+def sticker_from_text(user_id: int, username: str, text: str, avatar_path: str):
     size = (512, 2 * PADDING + BOX_HEIGHT)
     transparent = (0, 0, 0, 0)
 
@@ -121,12 +137,12 @@ def sticker_from_text(user_id: int, username: str, text: str, avatar=""):
     aux = ImageDraw.Draw(Image.new('RGBA', size, transparent))
     box_width = aux.textsize(aux_text, font=aux_font)[0] + 2 * MSG_PADDING_H + TIME_PADDING
     box_width = max(BOX_MIN_WIDTH, min(box_width, BOX_MAX_WIDTH))
-    img_width = min(512, 2*MARGIN + AVATAR_SIZE + PADDING + box_width)
+    img_width = min(512, 2 * MARGIN + AVATAR_SIZE + PADDING + box_width)
     size = (img_width, size[1])
 
     img = Image.new("RGBA", size, transparent)
     dr = ImageDraw.Draw(img)
-    draw_avatar(dr, avatar)
+    draw_avatar(img, avatar_path)
 
     x0 = MARGIN + PADDING + AVATAR_SIZE
     x1 = x0 + box_width
@@ -162,5 +178,18 @@ def sticker_from_image(jpg_path: str):
     return img_path
 
 
+def generate_avatar_mask(size: tuple):
+    y0 = BOX_HEIGHT + PADDING - AVATAR_SIZE
+    y1 = BOX_HEIGHT + PADDING
+    xy = [MARGIN, y0, MARGIN + AVATAR_SIZE, y1]
+
+    img = Image.new("RGBA", size, (0,0,0,0))
+    maskdraw = ImageDraw.Draw(img)
+    maskdraw.ellipse(xy, fill='#FFFFFF')
+    del maskdraw
+    return img
+
+
 if __name__ == "__main__":
-    sticker_from_text(46, "Tarcísio Eduardo Moreira Crocomo", "Haha")
+    # sticker_from_text(46, "Tarcísio Eduardo Moreira Crocomo", "Haha")
+    generate_avatar_mask()
