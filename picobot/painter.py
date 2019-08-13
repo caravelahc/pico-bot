@@ -1,8 +1,8 @@
 from PIL import Image, ImageDraw, ImageFont
-# from .config import ROOT_DIR
+from .config import ROOT_DIR
 
 # for testing purpose only
-ROOT_DIR = '/home/diogo/Documents/CCO/Python/pico-bot/picobot'
+# ROOT_DIR = '/home/diogo/Documents/CCO/Python/pico-bot/picobot'
 
 IMG_DIR = ROOT_DIR + '/images/'
 IMG_NAME = 'img'
@@ -171,7 +171,6 @@ def sticker_from_text(user_id: int, username: str, text: str, avatar_path: str):
     draw_username(dr, xy=xy, font=bold_font, username=username)
     draw_message(dr, xy=xy, font=font, text=final_text)
     draw_time(dr, xy=xy, font=time_font)
-    img.save(f'{IMG_DIR}kkroto.png')
 
     ratio = 512 / img_width
     sample = Image.ANTIALIAS

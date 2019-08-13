@@ -152,8 +152,11 @@ def add_text(bot: Bot, msg: Message):
         png_sticker.close()
     return True
 
+
 def caption_handler(bot: Bot, update: Update):
     text = update.message.caption
+    if text is None or text == '':
+        return
     if not check_msg_format(text):
         # TODO: if user has only one pack, use that as default
         update.message.reply_text(responses.INVALID_MSG)
