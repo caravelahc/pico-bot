@@ -42,19 +42,19 @@ def start(bot, update):
     update.message.reply_text(responses.GREETING)
 
 
-def new_pack(bot, update):
-    db = dataset.connect(f'sqlite:///{DB_PATH}')
-    table = db.get_table('users', primary_id='id')
-    user_id = update.message.from_user.id
-    user = table.find_one(id=user_id)
-    if not user:
-        table.insert(id=user_id)
+# def new_pack(bot: Bot, update: Update):
+#     db = dataset.connect(f'sqlite:///{DB_PATH}')
+#     table = db.get_table('users', primary_id='id')
+#     user_id = update.message.from_user.id
+#     user = table.find_one(id=user_id)
+#     if not user:
+#         table.insert(id=user_id)
 
-    pack_number = create_pack()
-    if pack_number == 0:
-        update.message.reply_text(responses.ERROR_MSG)
-    else:
-        update.message.reply_text(f'{responses.PACK_CREATED}: {pack_number}')
+#     pack_number = create_pack()
+#     if pack_number == 0:
+#         update.message.reply_text(responses.ERROR_MSG)
+#     else:
+#         update.message.reply_text(f'{responses.PACK_CREATED}: {pack_number}')
 
 
 def create_pack(bot: Bot, update: Update):
@@ -64,7 +64,7 @@ def create_pack(bot: Bot, update: Update):
     splittext = update.message.text.split()
     title = splittext[1]
     name = title + '_by_' + bot.username
-    png_sticker = open('images/caravela.png', 'rb')
+    png_sticker = open(f'{IMG_DIR}caravela.png', 'rb')
     if len(splittext) > 2:
         emoji = update.message.text.split()[2]
     else:
