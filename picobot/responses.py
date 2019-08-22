@@ -13,6 +13,8 @@ Por favor, primeiro crie um utilizando o comando /newpack para criar um novo pac
 
 ADDED_STICKER = 'Sticker adicionado!'
 
+REMOVED_STICKER = 'Sticker excluído!'
+
 GREETING = """Olá! Bot para automatizar a criação de stickers \
 a partir de imagens ou mensagens.
 Utilize o comando /help para ver os comandos disponíveis.

@@ -82,7 +82,7 @@ def add_sticker(bot: Bot, update: Update):
     response = responses.ERROR_MSG
 
     # check if it's image, file, text, or sticker
-    if msg_type == MsgType.TEXT:
+    if msg_type == MsgType.REP_TEXT:
         if add_text(bot, msg):
             response = responses.ADDED_STICKER
     elif msg_type == MsgType.PHOTO:
@@ -180,7 +180,7 @@ def get_msg_type(message: Message):
     elif message.document is not None:
         msg_type = MsgType.DOCUMENT
     elif message.text is not None:
-        return MsgType.TEXT if replied else None
+        msg_type = MsgType.TEXT
 
     if replied:
         return MsgType(msg_type * 10)
@@ -261,9 +261,25 @@ def insert_sticker_in_pack(bot: Bot, msg: Message):
     return True
 
 
-def del_sticker(bot, update):
-    # check format of msg
-    update.message.reply_text('NOT IMPLEMENTED')
+def del_sticker(bot: Bot, update: Update):
+    msg: Message = update.message
+    msg_type = get_msg_type(msg)
+
+    try:
+        # user_id = msg.from_user.id
+        if msg_type == MsgType.TEXT:
+            splittext = msg.text.split()
+            pack_name = splittext[1] + '_by_' + bot.username
+            pos = int(splittext[2])
+            sticker_id = bot.get_sticker_set(pack_name).stickers[pos].file_id
+        elif msg_type == MsgType.REP_STICKER:
+            sticker_id = msg.reply_to_message.sticker.file_id
+
+        bot.delete_sticker_from_set(sticker_id)
+    except Exception:
+        update.message.reply_text(responses.ERROR_MSG)
+        return
+    update.message.reply_text(responses.REMOVED_STICKER)
 
 
 def handler_help(bot, update):
