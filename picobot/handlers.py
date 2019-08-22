@@ -1,5 +1,4 @@
 import logging
-import dataset
 from telegram import Bot, Update, Message
 
 from functools import wraps
@@ -157,10 +156,6 @@ def caption_handler(bot: Bot, update: Update):
     text = update.message.caption
     if text is None or text == '':
         return
-    if not check_msg_format(text):
-        # TODO: if user has only one pack, use that as default
-        update.message.reply_text(responses.INVALID_MSG)
-        return
     if text.split()[0] == '/addsticker':
         update.message.text = text
         add_sticker(bot, update)
@@ -168,16 +163,6 @@ def caption_handler(bot: Bot, update: Update):
 
 def check_msg_format(text: str):
     return text is not None and len(text.split()) > 1
-
-
-@creator_only
-def check_msg_type(bot: Bot, update: Update):
-    msg_type = get_msg_type(update.message)
-    if msg_type is None:
-        update.message.reply_text(responses.INVALID_MSG)
-        handler_help(bot, update)
-    else:
-        update.message.reply_text(msg_type.name)
 
 
 def get_msg_type(message: Message):
