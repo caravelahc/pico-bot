@@ -1,5 +1,4 @@
 import logging
-import dataset
 from telegram import Bot, Update, Message
 
 from functools import wraps
@@ -126,9 +125,11 @@ def add_text(bot: Bot, msg: Message):
     if forward is not None:
         username = forward.first_name
         other_user_id = forward.id
+        msg_time = msg.reply_to_message.forward_date.strftime('%H:%M')
     else:
         username = msg.reply_to_message.from_user.first_name
         other_user_id = msg.reply_to_message.from_user.id
+        msg_time = msg.reply_to_message.date.strftime('%H:%M')
     photos = bot.get_user_profile_photos(other_user_id, limit=1).photos
     avatar_path = ''
     try:
@@ -140,7 +141,7 @@ def add_text(bot: Bot, msg: Message):
 
     text = msg.reply_to_message.text
     # save as png
-    img_path = sticker_from_text(user_id, username, text, avatar_path)
+    img_path = sticker_from_text(user_id, username, text, avatar_path, msg_time)
     png_sticker = open(img_path, 'rb')
     try:
         bot.add_sticker_to_set(user_id=user_id, name=pack_name, png_sticker=png_sticker, emojis=emoji)

@@ -14,7 +14,7 @@ PADDING = 10
 MSG_PADDING_H = 8
 MSG_PADDING_V = 6
 TIME_PADDING_H = 8
-TIME_PADDING_V = 6
+TIME_PADDING_BOTTOM = 6
 BOX_HEIGHT = 54
 BOX_MIN_WIDTH = 160
 BOX_MAX_WIDTH = 264
@@ -24,7 +24,7 @@ FONT_SIZE = 14
 TITLE_COLOR = "#338cf3"
 TEXT_COLOR = "#dddddd"
 TIME_COLOR = "#6A7B8C"
-LINE_SPACE = 10
+LINE_SPACE = 4
 
 
 def draw_balloon(
@@ -87,45 +87,51 @@ def draw_message(
     text="Oi, eu sou o Jojo",
     fill=TEXT_COLOR,
     font=None,
+    user_size=[0,0]
 ):
-    tw = txt_draw.textsize(text, font=font)
     x0 = xy[0] + MSG_PADDING_H
-    y0 = xy[3] - (MSG_PADDING_V + tw[1])
+    y0 = xy[1] + MSG_PADDING_V + user_size[1] + LINE_SPACE
     txt_draw.text((x0, y0), text, font=font, fill=fill)
 
 
 def draw_time(
-    txt_draw: ImageDraw.ImageDraw, xy: list, text="04:20", fill=TEXT_COLOR, font=None
+    txt_draw: ImageDraw.ImageDraw,
+    xy: list,
+    text="04:20",
+    fill=TEXT_COLOR,
+    font=None
 ):
     tw = txt_draw.textsize(text, font=font)
     x0 = xy[2] - TIME_PADDING_H - tw[0]
-    y0 = xy[3] - (TIME_PADDING_V + tw[1])
+    y0 = xy[3] - (TIME_PADDING_BOTTOM + tw[1])
     txt_draw.text((x0, y0), text, font=font, fill=TIME_COLOR)
 
 
-def draw_avatar(img, avatar_path: str):
-    y0 = BOX_HEIGHT + PADDING - AVATAR_SIZE
-    y1 = BOX_HEIGHT + PADDING
-    xy = [MARGIN, y0, MARGIN + AVATAR_SIZE, y1]
-    box = tuple(a-2 for a in xy[0:2])
+def draw_avatar(img, xy_balloon: list, avatar_path: str):
     if avatar_path == '':
         return
+    y0 = xy_balloon[3] - AVATAR_SIZE
+    y1 = xy_balloon[3]
+    xy = [MARGIN, y0, MARGIN + AVATAR_SIZE, y1]
+    box = tuple(a-2 for a in xy[0:2])
     size = AVATAR_SIZE + 4
     avatar = Image.open(avatar_path).convert(mode='RGBA')
-    if avatar.width >= avatar.height:
+    if avatar.width == avatar.height:
+        avatar = avatar.resize((size, size), resample=Image.ANTIALIAS)
+    elif avatar.width > avatar.height:
         ratio = size / avatar.width
         avatar = avatar.resize((size, int(ratio * avatar.height)), resample=Image.ANTIALIAS)
     else:
         ratio = size / avatar.height
         avatar = avatar.resize((int(ratio * avatar.width), size), resample=Image.ANTIALIAS)
 
-    avatar_mask = generate_avatar_mask(img.size)
+    avatar_mask = generate_avatar_mask(img.size, xy)
     tmp = Image.new('RGBA', img.size)
     tmp.paste(avatar, box=box)
     img.paste(tmp, mask=avatar_mask)
 
 
-def sticker_from_text(user_id: int, username: str, text: str, avatar_path: str):
+def sticker_from_text(user_id: int, username: str, text: str, avatar_path: str, msg_time: str):
     size = (512, 256)
     transparent = (0, 0, 0, 0)
 
@@ -137,45 +143,47 @@ def sticker_from_text(user_id: int, username: str, text: str, avatar_path: str):
     username = username if (len(username) < 26) else f'{username[0:25]}...'
     limit_is_user = (len(username) >= len(text))
     aux_img = ImageDraw.Draw(Image.new('RGBA', size, transparent))
+    title_size = aux_img.textsize(username, font=bold_font)
+    text_size = aux_img.textsize(text, font=font)
+    time_size = aux_img.textsize('04:20', font=time_font)
+    final_text = text
+
     if limit_is_user:
-        aux_text = username
-        text_size = aux_img.textsize(aux_text, font=bold_font)
-        box_size = (text_size[0] + 2 * MSG_PADDING_H + TIME_PADDING_H, text_size[1] + 2 * MSG_PADDING_V + 2 * LINE_SPACE)
-        final_text = text
+        bigger_size = title_size
     else:
-        aux_text = text + '8888'
-        if len(text) < 26:
-            text_size = aux_img.textsize(aux_text, font=font)
-            final_text = text
-        else:
+        if len(text) >= 26:
             aux_text = wrapped_text(text, line_limit=26)
             text_size = aux_img.multiline_textsize(aux_text, font=font)
             final_text = aux_text
-        box_size = (text_size[0] + 2 * MSG_PADDING_H + TIME_PADDING_H, text_size[1] + 2 * MSG_PADDING_V + 2 * LINE_SPACE)
+        bigger_size = text_size
+    box_size = (bigger_size[0] + 2 * MSG_PADDING_H,
+                title_size[1] + bigger_size[1] + 2 * MSG_PADDING_V + time_size[1] + 2 * LINE_SPACE)
 
     b_width = max(BOX_MIN_WIDTH, box_size[0])
     b_height = box_size[1]
     img_width = min(512, 2 * MARGIN + AVATAR_SIZE + PADDING + b_width)
     size = (img_width, 4 * PADDING + b_height)
 
-    img = Image.new("RGBA", size, transparent)
-    dr = ImageDraw.Draw(img)
-    draw_avatar(img, avatar_path)
-
     x0 = MARGIN + PADDING + AVATAR_SIZE
     x1 = x0 + b_width
     y1 = PADDING + b_height
-    xy = [x0, PADDING, x1, y1]
-    draw_balloon(dr, xy=xy, fill=BOX_COLOR)
+    xy_balloon = [x0, PADDING, x1, y1]
 
-    draw_username(dr, xy=xy, font=bold_font, username=username)
-    draw_message(dr, xy=xy, font=font, text=final_text)
-    draw_time(dr, xy=xy, font=time_font)
+    img = Image.new("RGBA", size, transparent)
+    dr = ImageDraw.Draw(img)
+    draw_avatar(img, xy_balloon=xy_balloon, avatar_path=avatar_path)
 
+    draw_balloon(dr, xy=xy_balloon, fill=BOX_COLOR)
+
+    draw_username(dr, xy=xy_balloon, font=bold_font, username=username)
+    draw_message(dr, xy=xy_balloon, font=font, text=final_text, user_size=title_size)
+    draw_time(dr, text=msg_time, xy=xy_balloon, font=time_font)
+
+    img.show()
     ratio = 512 / img_width
     sample = Image.ANTIALIAS
     img = img.resize((512, int(ratio * size[1])), resample=sample)
-
+    img.show()
     img_path = IMG_DIR + IMG_NAME + str(user_id) + '.png'
     img.save(img_path)
     img.close()
@@ -207,18 +215,9 @@ def sticker_from_image(jpg_path: str):
     return img_path
 
 
-def generate_avatar_mask(size: tuple):
-    y0 = BOX_HEIGHT + PADDING - AVATAR_SIZE
-    y1 = BOX_HEIGHT + PADDING
-    xy = [MARGIN, y0, MARGIN + AVATAR_SIZE, y1]
-
-    img = Image.new("RGBA", size, (0, 0, 0, 0))
+def generate_avatar_mask(img_size: tuple, xy: list):
+    img = Image.new("RGBA", img_size, (0, 0, 0, 0))
     maskdraw = ImageDraw.Draw(img)
     maskdraw.ellipse(xy, fill='#FFFFFF')
     del maskdraw
     return img
-
-
-if __name__ == "__main__":
-    # sticker_from_text(46, "Tarcísio Eduardo Moreira Crocomo", "Haha")
-    generate_avatar_mask()
