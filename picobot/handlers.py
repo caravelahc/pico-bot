@@ -277,7 +277,7 @@ def del_sticker(bot: Bot, update: Update):
 
         bot.delete_sticker_from_set(sticker_id)
     except Exception:
-        update.message.reply_text(responses.ERROR_MSG)
+        update.message.reply_text(responses.REMOVE_STICKER_HELP)
         return
     update.message.reply_text(responses.REMOVED_STICKER)
 

@@ -15,6 +15,12 @@ ADDED_STICKER = 'Sticker adicionado!'
 
 REMOVED_STICKER = 'Sticker excluído!'
 
+REMOVE_STICKER_HELP = """Comando inválido.
+- Responda a um sticker que você possui com o comando /delsticker
+- Ou use /delsticker <NomeDoPack> <X>
+X: posição do sticker no pack, sendo 0 (zero) o primeiro
+"""
+
 GREETING = """Olá! Bot para automatizar a criação de stickers \
 a partir de imagens ou mensagens.
 Utilize o comando /help para ver os comandos disponíveis.
@@ -29,14 +35,9 @@ This incident will be reported."""
 
 HELP_MSG = """Comandos:
     /newpack <NomeDoPack> - cria um novo pack/pacote
-    /setpackicon - define o ícone do pack
     /addsticker <NomeDoPack> [emoji]:
         Adiciona sticker a um pack, com o respectivo emoji. \
 Envie esse comando como legenda de uma imagem, \
 em resposta a uma imagem/mensagem para criar um novo sticker, \
 ou como resposta a um sticker existente para apenas adicioná-lo ao pack.
-    /delsticker - remove o sticker do pack (não recuperável)
-
-    Este bot também reflete os demais comandos do bot oficial de \
-stickers do telegram, para mais informações verifique a ajuda \
-do @Stickers"""
+    /delsticker <NomeDoPack> <Posição> - remove o sticker do pack (não recuperável)"""
