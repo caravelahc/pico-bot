@@ -179,11 +179,9 @@ def sticker_from_text(user_id: int, username: str, text: str, avatar_path: str, 
     draw_message(dr, xy=xy_balloon, font=font, text=final_text, user_size=title_size)
     draw_time(dr, text=msg_time, xy=xy_balloon, font=time_font)
 
-    img.show()
     ratio = 512 / img_width
     sample = Image.ANTIALIAS
     img = img.resize((512, int(ratio * size[1])), resample=sample)
-    img.show()
     img_path = IMG_DIR + IMG_NAME + str(user_id) + '.png'
     img.save(img_path)
     img.close()

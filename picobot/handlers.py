@@ -1,4 +1,5 @@
 import logging
+import os
 from telegram import Bot, Update, Message
 
 from functools import wraps
@@ -151,6 +152,11 @@ def add_text(bot: Bot, msg: Message):
         return False
     finally:
         png_sticker.close()
+
+    if os.path.exists(img_path):
+        os.remove(img_path)
+    if os.path.exists(avatar_path):
+        os.remove(avatar_path)
     return True
 
 
