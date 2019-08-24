@@ -1,7 +1,9 @@
-import dataset
-from telegram import User
+import os
+from time import time
+import pickle
 
-from .user_entity import UserEntity
+
+BACKUP_TIME = 3600  # seconds
 
 
 def repository(database_path: str = None):
@@ -10,54 +12,63 @@ def repository(database_path: str = None):
     return Repo.instance
 
 
-def fake_startup():
-    r = repository()
-    tarcisio = UserEntity(User(18471616, 'Tarcisio', False, 'Crocomo', 'tarcisioe'))
-    tarcisio.packs = set(['meupackzera_by_HitchhikersBot', 'guaxinim_by_HitchhikersBot', 'llamas_by_HitchhikersBot', 'bonde_by_HitchhikersBot'])
-    tarcisio.def_pack = 'guaxinim_by_HitchhikersBot'
-    diogo = UserEntity(User(206454394, 'Diogo', False, 'Junoir', 'diogojs'))
-    diogo.packs.add('FavoriteBarnei_by_HitchhikersBot')
-    r._users = {
-        18471616: tarcisio,
-        206454394: diogo
-    }
-    r._packs = {'PicoTestPk_by_HitchhikersBot': True, 'zipzap_by_HitchhikersBot': False}
-
-
 class Repo(object):
     instance = None
 
     def __init__(self, database_path: str = None):
-        self._db = None
+        self._db = ''
         self._users = {}
-        self._packs = {}
+        self._public_packs = set()
 
         if database_path is not None:
-            self._create_or_connect_to_db(database_path)
+            self._load_db(database_path)
 
     def users(self):
         return self._users
 
     def packs(self):
-        return self._packs
+        return self._public_packs
 
     def add_pack_to_user(self, user_id: int, pack_name: str):
         self._users[user_id].packs.add(pack_name)
+        self._update_db()
 
     def check_permission(self, user_id: int, pack_name: str):
-        if self._packs.get(pack_name):
+        if pack_name in self._public_packs:
             return True
         return user_id in self._users and \
             pack_name in self._users[user_id].packs
 
-    def _create_or_connect_to_db(self, db_path: str):
-        self._db = dataset.connect(f'sqlite:///{db_path}')
+    def set_pack_public(self, pack_name: str, is_public: bool):
+        if is_public:
+            self._public_packs.add(pack_name)
+        elif pack_name in self._public_packs:
+            self._public_packs.remove(pack_name)
+        self._update_db()
 
-    def _db_add_user(self, user: UserEntity):
-        if self._db is None:
-            return
+    def _load_db(self, db_path: str):
+        self._db = db_path
+        if os.path.exists(db_path):
+            data = pickle.loads(open(db_path, 'rb'))
+            self._users = data['users']
+            self._public_packs = data['packs']
 
-        table = self._db.get_table('users', primary_id='id')
-        existent = table.find_one(id=user.t_user.id)
-        if not existent:
-            table.insert(id=user.t_user.id)
+    def _update_db(self):
+        """ Save data to disk if passed BACKUP_TIME from last update
+            @Returns:
+                True if data saved
+                False otherwise
+        """
+        if os.path.exists(self._db):
+            last_update = os.path.getmtime(self._db)
+            if time.time() > (last_update + BACKUP_TIME):
+                self._force_update_db(self._db)
+                return True
+        return False
+
+    def _force_update_db(self, db_path: str):
+        data = {
+            'users': self._users,
+            'packs': self._public_packs
+        }
+        pickle.dump(data, open(db_path, 'wb'))

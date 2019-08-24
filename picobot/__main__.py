@@ -2,7 +2,7 @@ from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 
 from picobot import handlers
 from .config import TOKEN, DB_PATH
-from .repository.repo import repository, fake_startup
+from .repository.repo import repository
 
 
 def main():
@@ -20,11 +20,14 @@ def main():
     dp.add_handler(CommandHandler('delsticker', handlers.del_sticker))
     dp.add_handler(CommandHandler('help', handlers.handler_help))
     dp.add_handler(CommandHandler('test', handlers.test))
+    dp.add_handler(CommandHandler('setdefaultpack', handlers.set_default_pack))
+    dp.add_handler(CommandHandler('setpublic', handlers.handler_pack_public))
+    dp.add_handler(CommandHandler('setprivate', handlers.handler_pack_private))
+    dp.add_handler(CommandHandler('add_pack_to_user', handlers.add_pack_to_user))
     media_filter = (Filters.photo | Filters.document) & (~ Filters.reply)
     dp.add_handler(MessageHandler(filters=media_filter, callback=handlers.caption_handler))
 
-    r = repository(DB_PATH)
-    fake_startup()
+    repository(DB_PATH)  # create or load persistence repository
     updater.start_polling()
     updater.idle()
 

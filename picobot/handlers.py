@@ -34,10 +34,6 @@ def creator_only(func):
     return new_func
 
 
-def text_handler(bot, update):
-    pass
-
-
 def start(bot, update):
     """Send a message when the command /start is issued."""
     update.message.reply_text(responses.GREETING)
@@ -166,31 +162,6 @@ def caption_handler(bot: Bot, update: Update):
         add_sticker(bot, update)
 
 
-def check_msg_format(text: str):
-    return text is not None and len(text.split()) > 1
-
-
-def get_msg_type(message: Message):
-    replied = False
-    if message.reply_to_message is not None:
-        replied = True
-        message = message.reply_to_message
-
-    if message.photo is not None and len(message.photo) > 0:
-        msg_type = MsgType.PHOTO
-    elif message.sticker is not None:
-        msg_type = MsgType.STICKER
-    elif message.document is not None:
-        msg_type = MsgType.DOCUMENT
-    elif message.text is not None:
-        msg_type = MsgType.TEXT
-
-    if replied:
-        return MsgType(msg_type * 10)
-    else:
-        return msg_type
-
-
 def add_photo(bot: Bot, msg: Message, user_id: int, pack_name: str, emoji: str, replied: bool):
     if replied:
         photo = msg.reply_to_message.photo[-1]
@@ -264,6 +235,88 @@ def del_sticker(bot: Bot, update: Update):
     update.message.reply_text(responses.REMOVED_STICKER)
 
 
+def set_default_pack(bot: Bot, update: Update):
+    msg: Message = update.message
+    user_id = msg.from_user.id
+
+    if check_msg_format(msg.text):
+        pack_name = msg.text.split()[1] + '_by_' + bot.username
+        # check if user is pack's owner
+        if repository().check_permission(user_id, pack_name):
+            repository().users().get(user_id).def_pack = pack_name
+        else:
+            msg.reply_text(responses.NO_PERMISSION)
+            return
+    else:
+        update.message.reply_text(responses.INVALID_MSG)
+
+
+def handler_pack_public(bot: Bot, update: Update):
+    _set_pack_public(bot, update, True)
+
+
+def handler_pack_private(bot: Bot, update: Update):
+    _set_pack_public(bot, update, False)
+
+
+def _set_pack_public(bot: Bot, update: Update, is_public: bool):
+    msg: Message = update.message
+    user_id = msg.from_user.id
+
+    if check_msg_format(msg.text):
+        pack_name = msg.text.split()[1] + '_by_' + bot.username
+        # check if user is pack's owner
+        if repository().check_permission(user_id, pack_name):
+            repository().set_pack_public(pack_name, is_public)
+        else:
+            msg.reply_text(responses.NO_PERMISSION)
+            return
+    else:
+        msg.reply_text(responses.INVALID_MSG)
+
+
+@creator_only
+def add_pack_to_user(bot: Bot, update: Update):
+    msg: Message = update.message
+    try:
+        user = msg.reply_to_message.forward_from
+        if user is None:
+            user = msg.reply_to_message.from_user
+
+        if check_msg_format(msg.text):
+            pack_name = msg.text.split()[1] + '_by_' + bot.username
+            repository().add_pack_to_user(user.id, pack_name)
+        else:
+            msg.reply_text(responses.INVALID_MSG)
+    except Exception:
+        msg.reply_text(responses.ERROR_MSG)
+
+
+def check_msg_format(text: str):
+    return text is not None and len(text.split()) > 1
+
+
+def get_msg_type(message: Message):
+    replied = False
+    if message.reply_to_message is not None:
+        replied = True
+        message = message.reply_to_message
+
+    if message.photo is not None and len(message.photo) > 0:
+        msg_type = MsgType.PHOTO
+    elif message.sticker is not None:
+        msg_type = MsgType.STICKER
+    elif message.document is not None:
+        msg_type = MsgType.DOCUMENT
+    elif message.text is not None:
+        msg_type = MsgType.TEXT
+
+    if replied:
+        return MsgType(msg_type * 10)
+    else:
+        return msg_type
+
+
 def handler_help(bot, update):
     """Send a message when the command /help is issued."""
     update.message.reply_text(responses.HELP_MSG)
@@ -272,12 +325,3 @@ def handler_help(bot, update):
 def error(bot, update, error):
     """Log Errors caused by Updates."""
     logger.warning('Update "%s" caused error "%s"', update, error)
-
-
-def test(bot: Bot, update: Update):
-    msg = update.message
-    msg_type = get_msg_type(msg)
-    user_id = msg.from_user.id
-    print(msg.text)
-    print(msg_type)
-    print(f'user: {user_id}')

@@ -39,9 +39,12 @@ ou que o mesmo é público."""
 
 HELP_MSG = """Comandos:
     /newpack <NomeDoPack> - cria um novo pack/pacote
-    /addsticker <NomeDoPack> [emoji]:
+    /addsticker <emoji> [NomeDoPack]:
         Adiciona sticker a um pack, com o respectivo emoji. \
 Envie esse comando como legenda de uma imagem, \
 em resposta a uma imagem/mensagem para criar um novo sticker, \
 ou como resposta a um sticker existente para apenas adicioná-lo ao pack.
-    /delsticker <NomeDoPack> <Posição> - remove o sticker do pack (não recuperável)"""
+    /delsticker <NomeDoPack> <Posição> - remove o sticker do pack (não recuperável)
+    /setdefaultpack <NomeDoPack> - configura seu pack padrão
+    /setpublic <NomeDoPack> - torna seu pack público (qualquer pessoa pode editá-lo, adicionar e remover stickers)
+    /setprivate <NomeDoPack> - torna seu pack privado para edição (qualquer pessoa ainda pode visualizá-lo e utilizá-lo) """
