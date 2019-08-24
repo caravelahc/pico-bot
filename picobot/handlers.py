@@ -40,7 +40,7 @@ def start(bot, update):
 
 
 def create_pack(bot: Bot, update: Update):
-    user_id = update.message.from_user.id
+    user = update.message.from_user
     if not check_msg_format(update.message.text):
         update.message.reply_text(responses.INVALID_MSG)
     splittext = update.message.text.split()
@@ -54,10 +54,10 @@ def create_pack(bot: Bot, update: Update):
 
     # Create Pack
     try:
-        bot.create_new_sticker_set(user_id=user_id, name=name, title=title, png_sticker=png_sticker, emojis=emoji)
+        bot.create_new_sticker_set(user_id=user.id, name=name, title=title, png_sticker=png_sticker, emojis=emoji)
         sticker = bot.get_sticker_set(name).stickers[0]
         update.message.reply_sticker(sticker)
-        repository().add_pack_to_user(user_id, name)
+        repository().add_pack_to_user(user, name)
     except Exception:
         update.message.reply_text(responses.ERROR_MSG)
     png_sticker.close()
@@ -285,7 +285,7 @@ def add_pack_to_user(bot: Bot, update: Update):
 
         if check_msg_format(msg.text):
             pack_name = msg.text.split()[1] + '_by_' + bot.username
-            repository().add_pack_to_user(user.id, pack_name)
+            repository().add_pack_to_user(user, pack_name)
         else:
             msg.reply_text(responses.INVALID_MSG)
     except Exception:

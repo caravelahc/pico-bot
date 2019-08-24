@@ -1,6 +1,8 @@
 import os
-from time import time
+import time
 import pickle
+
+from .user_entity import UserEntity
 
 
 BACKUP_TIME = 3600  # seconds
@@ -29,8 +31,11 @@ class Repo(object):
     def packs(self):
         return self._public_packs
 
-    def add_pack_to_user(self, user_id: int, pack_name: str):
-        self._users[user_id].packs.add(pack_name)
+    def add_pack_to_user(self, user, pack_name: str):
+        if user.id not in self._users:
+            self._users[user.id] = UserEntity(user)
+
+        self._users[user.id].packs.add(pack_name)
         self._update_db()
 
     def check_permission(self, user_id: int, pack_name: str):
@@ -49,9 +54,11 @@ class Repo(object):
     def _load_db(self, db_path: str):
         self._db = db_path
         if os.path.exists(db_path):
-            data = pickle.loads(open(db_path, 'rb'))
+            fp = open(db_path, 'rb')
+            data = pickle.load(fp)
             self._users = data['users']
             self._public_packs = data['packs']
+            fp.close()
 
     def _update_db(self):
         """ Save data to disk if passed BACKUP_TIME from last update
@@ -59,11 +66,13 @@ class Repo(object):
                 True if data saved
                 False otherwise
         """
+        last_update = 0
         if os.path.exists(self._db):
             last_update = os.path.getmtime(self._db)
-            if time.time() > (last_update + BACKUP_TIME):
-                self._force_update_db(self._db)
-                return True
+
+        if time.time() > (last_update + BACKUP_TIME):
+            self._force_update_db(self._db)
+            return True
         return False
 
     def _force_update_db(self, db_path: str):
@@ -71,4 +80,6 @@ class Repo(object):
             'users': self._users,
             'packs': self._public_packs
         }
-        pickle.dump(data, open(db_path, 'wb'))
+        fp = open(db_path, 'wb')
+        pickle.dump(data, fp)
+        fp.close()
