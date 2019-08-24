@@ -30,8 +30,12 @@ http://github.com/caravelahc/pico-bot
 
 Feito por @diogojs e @caravelahc"""
 
-ACCESS_DENIED = """Username is not in the sudoers file.
+CREATOR_ACCESS_DENIED = """Username is not in the sudoers file.
 This incident will be reported."""
+
+NO_PERMISSION = """Você não tem permissão para editar este pack.
+Certifique-se de que você é dono do pack, \
+ou que o mesmo é público."""
 
 HELP_MSG = """Comandos:
     /newpack <NomeDoPack> - cria um novo pack/pacote

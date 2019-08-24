@@ -1,7 +1,8 @@
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 
 from picobot import handlers
-from .config import TOKEN
+from .config import TOKEN, DB_PATH
+from .repository.repo import repository, fake_startup
 
 
 def main():
@@ -18,9 +19,12 @@ def main():
     dp.add_handler(CommandHandler('newpack', handlers.create_pack))
     dp.add_handler(CommandHandler('delsticker', handlers.del_sticker))
     dp.add_handler(CommandHandler('help', handlers.handler_help))
+    dp.add_handler(CommandHandler('test', handlers.test))
     media_filter = (Filters.photo | Filters.document) & (~ Filters.reply)
     dp.add_handler(MessageHandler(filters=media_filter, callback=handlers.caption_handler))
 
+    r = repository(DB_PATH)
+    fake_startup()
     updater.start_polling()
     updater.idle()
 

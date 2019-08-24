@@ -4,10 +4,11 @@ from telegram import Bot, Update, Message
 
 from functools import wraps
 
-from .config import CREATOR_ID, DB_PATH, ROOT_DIR
+from .config import CREATOR_ID, ROOT_DIR
 from picobot import responses
 from .msg_type import MsgType
 from .painter import sticker_from_text, sticker_from_image
+from .repository.repo import repository
 
 IMG_DIR = ROOT_DIR + '/images/'
 IMG_NAME = 'img'
@@ -28,7 +29,7 @@ def creator_only(func):
         if update.message.from_user.id == CREATOR_ID:
             return func(bot, update, *args, **kwargs)
         else:
-            update.message.reply_text(responses.ACCESS_DENIED)
+            update.message.reply_text(responses.CREATOR_ACCESS_DENIED)
 
     return new_func
 
@@ -40,21 +41,6 @@ def text_handler(bot, update):
 def start(bot, update):
     """Send a message when the command /start is issued."""
     update.message.reply_text(responses.GREETING)
-
-
-# def new_pack(bot: Bot, update: Update):
-#     db = dataset.connect(f'sqlite:///{DB_PATH}')
-#     table = db.get_table('users', primary_id='id')
-#     user_id = update.message.from_user.id
-#     user = table.find_one(id=user_id)
-#     if not user:
-#         table.insert(id=user_id)
-
-#     pack_number = create_pack()
-#     if pack_number == 0:
-#         update.message.reply_text(responses.ERROR_MSG)
-#     else:
-#         update.message.reply_text(f'{responses.PACK_CREATED}: {pack_number}')
 
 
 def create_pack(bot: Bot, update: Update):
@@ -71,36 +57,60 @@ def create_pack(bot: Bot, update: Update):
         emoji = DEFAULT_EMOJI
 
     # Create Pack
-    if bot.create_new_sticker_set(user_id=user_id, name=name, title=title, png_sticker=png_sticker, emojis=emoji):
+    try:
+        bot.create_new_sticker_set(user_id=user_id, name=name, title=title, png_sticker=png_sticker, emojis=emoji)
         sticker = bot.get_sticker_set(name).stickers[0]
         update.message.reply_sticker(sticker)
+        repository().add_pack_to_user(user_id, name)
+    except Exception:
+        update.message.reply_text(responses.ERROR_MSG)
     png_sticker.close()
 
 
 def add_sticker(bot: Bot, update: Update):
-    msg: Message = update.message
+    msg = update.message
     msg_type = get_msg_type(msg)
     response = responses.ERROR_MSG
 
+    user_id = msg.from_user.id
+    splittext = msg.text.split()
+    if check_msg_format(msg.text):
+        pack_name = splittext[1] + '_by_' + bot.username
+        # check if user is pack's owner
+        if not repository().check_permission(user_id, pack_name):
+            msg.reply_text(responses.NO_PERMISSION)
+            return
+    else:  # if pack name not informed check if user has default pack
+        user = repository().users().get(user_id)
+        if user is not None and user.def_pack is not None:
+            pack_name = user.def_pack
+        else:
+            msg.reply_text(responses.INVALID_MSG)
+            return
+    if len(splittext) > 2:
+        emoji = msg.text.split()[2]
+    else:
+        emoji = DEFAULT_EMOJI
+
     # check if it's image, file, text, or sticker
     if msg_type == MsgType.REP_TEXT:
-        if add_text(bot, msg):
+        if add_text(bot, msg, user_id, pack_name, emoji):
             response = responses.ADDED_STICKER
     elif msg_type == MsgType.PHOTO:
-        if add_photo(bot, msg, False):
+        if add_photo(bot, msg, user_id, pack_name, emoji, False):
             response = responses.ADDED_STICKER
     elif msg_type == MsgType.REP_PHOTO:
-        if add_photo(bot, msg, True):
+        if add_photo(bot, msg, user_id, pack_name, emoji, True):
             response = responses.ADDED_STICKER
     elif msg_type == MsgType.DOCUMENT:
-        if add_document(bot, msg, False):
+        if add_document(bot, msg, user_id, pack_name, emoji, False):
             response = responses.ADDED_STICKER
     elif msg_type == MsgType.REP_DOCUMENT:
-        if add_document(bot, msg, True):
+        if add_document(bot, msg, user_id, pack_name, emoji, True):
             response = responses.ADDED_STICKER
 
     elif msg_type in [MsgType.STICKER, MsgType.REP_STICKER]:
-        if insert_sticker_in_pack(bot, msg):
+        if insert_sticker_in_pack(bot, msg, user_id, pack_name, emoji):
             response = responses.ADDED_STICKER
 
     # check for errors
@@ -108,20 +118,7 @@ def add_sticker(bot: Bot, update: Update):
     update.message.reply_text(response)
 
 
-def add_text(bot: Bot, msg: Message):
-    if not check_msg_format(msg.text):
-        # TODO: if user has only one pack, use that as default
-        msg.reply_text(responses.INVALID_MSG)
-        return
-
-    user_id = msg.from_user.id
-    splittext = msg.text.split()
-    pack_name = splittext[1] + '_by_' + bot.username
-    if len(splittext) > 2:
-        emoji = msg.text.split()[2]
-    else:
-        emoji = DEFAULT_EMOJI
-
+def add_text(bot: Bot, msg: Message, user_id: int, pack_name: str, emoji: str):
     forward = msg.reply_to_message.forward_from
     if forward is not None:
         username = forward.first_name
@@ -194,14 +191,7 @@ def get_msg_type(message: Message):
         return msg_type
 
 
-def add_photo(bot: Bot, msg: Message, replied: bool):
-    user_id = msg.from_user.id
-    splittext = msg.text.split()
-    pack_name = splittext[1] + '_by_' + bot.username
-    if len(splittext) > 2:
-        emoji = msg.text.split()[2]
-    else:
-        emoji = DEFAULT_EMOJI
+def add_photo(bot: Bot, msg: Message, user_id: int, pack_name: str, emoji: str, replied: bool):
     if replied:
         photo = msg.reply_to_message.photo[-1]
     else:
@@ -220,14 +210,7 @@ def add_photo(bot: Bot, msg: Message, replied: bool):
     return True
 
 
-def add_document(bot: Bot, msg: Message, replied: bool):
-    user_id = msg.from_user.id
-    splittext = msg.text.split()
-    pack_name = splittext[1] + '_by_' + bot.username
-    if len(splittext) > 2:
-        emoji = msg.text.split()[2]
-    else:
-        emoji = DEFAULT_EMOJI
+def add_document(bot: Bot, msg: Message, user_id: int, pack_name: str, emoji: str, replied: bool):
     if replied:
         doc = msg.reply_to_message.document
     else:
@@ -243,14 +226,7 @@ def add_document(bot: Bot, msg: Message, replied: bool):
     return True
 
 
-def insert_sticker_in_pack(bot: Bot, msg: Message):
-    user_id = msg.from_user.id
-    splittext = msg.text.split()
-    pack_name = splittext[1] + '_by_' + bot.username
-    if len(splittext) > 2:
-        emoji = msg.text.split()[2]
-    else:
-        emoji = DEFAULT_EMOJI
+def insert_sticker_in_pack(bot: Bot, msg: Message, user_id: int, pack_name: str, emoji: str):
     sticker_id = msg.reply_to_message.sticker.file_id
 
     img_path = IMG_DIR + IMG_NAME + str(user_id) + '.jpg'
@@ -296,3 +272,12 @@ def handler_help(bot, update):
 def error(bot, update, error):
     """Log Errors caused by Updates."""
     logger.warning('Update "%s" caused error "%s"', update, error)
+
+
+def test(bot: Bot, update: Update):
+    msg = update.message
+    msg_type = get_msg_type(msg)
+    user_id = msg.from_user.id
+    print(msg.text)
+    print(msg_type)
+    print(f'user: {user_id}')
