@@ -49,12 +49,65 @@ Vamos criar o nosso Bot junto ao Telegram para obter o `token` e poder configura
 
 Consulte o seu ID de usuário no Telegram através de um bot como o [@userinfobot](https://t.me/userinfobot), que lhe fornece facilmente o ID (identificador único) da sua conta.
 
+### B.3) "DB_Path"
 
-## C) Comandos Úteis
+Pode deixar o valor apenas como `picobot/bot.db`. Não nos é muito interessante agora. 
 
-**Logar no servidor do GCloud:**
+
+## C) Como Usar
+
+### Criar novo pacote de Stickers:
+
+Cria um novo pack/pacote de stickers, que lhe permitirá adicionar stickers nele e compartilhar para uso/edição dos demais usuários do Telegram.
 
 ```
-gcloud compute ssh sagan-was-right
+/newpack@<NomeDoBot> <NomeDoPacoteDeStickers>
+```
+
+### Adicionar sticker no Pack:
+
+Adiciona sticker a um pack, com o respectivo emoji. Envie esse comando como legenda de uma imagem, em resposta a uma imagem/mensagem para criar um novo sticker, ou como resposta a um sticker existente para apenas adicioná-lo ao pack.
+
+
+```
+/addsticker@<NomeDoBot> [NomeDoPack] <Emoji>
+```
+
+### Remover sticker do Pack:
+
+Remove o sticker do pack (não recuperável), sendo que `<Posicao>` é a posição do sticker dentro do pack. Caso `<Posicao>` seja igual à 0 (zero), removerá o primeiro sticker, caso o seu valor seja **1 (um)** removerá o segundo sticker, e assim por diante.
+
+```
+/delsticker@<NomeDoBot> [NomeDoPack] <Posicao>
+```
+
+### Configurar pack de stickers padrão:
+
+Configura seu pack padrão.
+
+```
+/setdefaultpack@<NomeDoBot> [NomeDoPack]
+```
+
+### Tornar pack público:
+
+Torna seu pack público, de forma que qualquer pessoa pode editá-lo (adicionar e remover stickers).
+
+```
+/setpublic <NomeDoPack>
+```
+
+### Tornar pack privado:
+
+Torna seu pack privado para edição, de forma que qualquer pessoa possa apenas visualizá-lo e utilizá-lo, sem opção de adicionar ou remover stickers.
+
+```
+/setprivate <NomeDoPack>
+```
+
+### Logar na instância do GCloud via SSH:
+
+```
+gcloud compute ssh <instance_name_on_gcloud>
 ```
 
