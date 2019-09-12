@@ -1,12 +1,12 @@
 # Pico-Bot
 
 Bot para automatizar a criação de stickers a partir de imagens ou mensagens.
-Utilize o comando `/help` para ver os comandos disponíveis.
 
 Código disponível no repositório:
 [http://github.com/caravelahc/pico-bot]()
 
 Feito por [@diogojs](https://t.me/diogojs) e [@caravelahc](https://t.me/caravelahc).
+
 
 ## A) Como Instalar
 
@@ -20,23 +20,25 @@ Primeiro de tudo, instale o `poetry`, que é um gerenciador de pacotes e depend�
 
 ### A.3) Dependências
 
-Para instalar as dependências do projeto, vamos criar um ambiente local para que possamos instalar os pacotes sem afetar o sistema:
-
-```
-python3.7 -m venv .venv
-source .venv/bin/activate
-```
-
-Estando dentro do VENV (virtual env), basta executar o seguinte comando e aguardar:
-
+Para instalar as dependências do projeto, utilizamos o gerenciador de dependências `poetry`, executando o comando:
 ```
 poetry install
 ```
 
+Caso possua problemas com a instalação através do `poetry`, é possível criar um ambiente local manualmente, para que possamos instalar os pacotes sem afetar o sistema:
+```
+python3.7 -m venv .venv
+source .venv/bin/activate
+```
+Estando dentro do VENV (virtual env), tente rodar novamente `poetry install`, ou instale as dependências listadas no arquivo `pyproject.toml` manualmente, com o comando:
+```
+python3.7 -m pip install <dependencia>
+```
+
+
 ## B) Como Configurar
 
 Todas as variáveis que precisam ser configuradas são localizadas no arquivo `config.json.copy`, que deve ser renomeado para `config.json` com o seguinte comando:
-
 ```
 cp config.json.copy config.json
 ```
@@ -59,7 +61,6 @@ Pode deixar o valor apenas como `picobot/bot.db`. Não nos é muito interessante
 ### Criar novo pacote de Stickers:
 
 Cria um novo pack/pacote de stickers, que lhe permitirá adicionar stickers nele e compartilhar para uso/edição dos demais usuários do Telegram.
-
 ```
 /newpack@<NomeDoBot> <NomeDoPacoteDeStickers>
 ```
@@ -67,8 +68,6 @@ Cria um novo pack/pacote de stickers, que lhe permitirá adicionar stickers nele
 ### Adicionar sticker no Pack:
 
 Adiciona sticker a um pack, com o respectivo emoji. Envie esse comando como legenda de uma imagem, em resposta a uma imagem/mensagem para criar um novo sticker, ou como resposta a um sticker existente para apenas adicioná-lo ao pack.
-
-
 ```
 /addsticker@<NomeDoBot> [NomeDoPack] <Emoji>
 ```
@@ -76,7 +75,6 @@ Adiciona sticker a um pack, com o respectivo emoji. Envie esse comando como lege
 ### Remover sticker do Pack:
 
 Remove o sticker do pack (não recuperável), sendo que `<Posicao>` é a posição do sticker dentro do pack. Caso `<Posicao>` seja igual à 0 (zero), removerá o primeiro sticker, caso o seu valor seja **1 (um)** removerá o segundo sticker, e assim por diante.
-
 ```
 /delsticker@<NomeDoBot> [NomeDoPack] <Posicao>
 ```
@@ -84,7 +82,6 @@ Remove o sticker do pack (não recuperável), sendo que `<Posicao>` é a posiç�
 ### Configurar pack de stickers padrão:
 
 Configura seu pack padrão.
-
 ```
 /setdefaultpack@<NomeDoBot> [NomeDoPack]
 ```
@@ -92,7 +89,6 @@ Configura seu pack padrão.
 ### Tornar pack público:
 
 Torna seu pack público, de forma que qualquer pessoa pode editá-lo (adicionar e remover stickers).
-
 ```
 /setpublic <NomeDoPack>
 ```
@@ -100,13 +96,14 @@ Torna seu pack público, de forma que qualquer pessoa pode editá-lo (adicionar 
 ### Tornar pack privado:
 
 Torna seu pack privado para edição, de forma que qualquer pessoa possa apenas visualizá-lo e utilizá-lo, sem opção de adicionar ou remover stickers.
-
 ```
 /setprivate <NomeDoPack>
 ```
 
-### Logar na instância do GCloud via SSH:
 
+## D) Outros Comandos Úteis
+
+### Logar na instância do GCloud via SSH:
 ```
 gcloud compute ssh <instance_name_on_gcloud>
 ```
