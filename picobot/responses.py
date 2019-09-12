@@ -39,7 +39,7 @@ ou que o mesmo é público."""
 
 HELP_MSG = """Comandos:
     /newpack <NomeDoPack> - cria um novo pack/pacote
-    /addsticker <emoji> [NomeDoPack]:
+    /addsticker [NomeDoPack] <emoji>:
         Adiciona sticker a um pack, com o respectivo emoji. \
 Envie esse comando como legenda de uma imagem, \
 em resposta a uma imagem/mensagem para criar um novo sticker, \
