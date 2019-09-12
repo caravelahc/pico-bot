@@ -5,9 +5,6 @@ import pickle
 from .user_entity import UserEntity
 
 
-BACKUP_TIME = 3600  # seconds
-
-
 def repository(database_path: str = None):
     if Repo.instance is None:
         Repo.instance = Repo(database_path)
@@ -61,25 +58,10 @@ class Repo(object):
             fp.close()
 
     def _update_db(self):
-        """ Save data to disk if passed BACKUP_TIME from last update
-            @Returns:
-                True if data saved
-                False otherwise
-        """
-        last_update = 0
-        if os.path.exists(self._db):
-            last_update = os.path.getmtime(self._db)
-
-        if time.time() > (last_update + BACKUP_TIME):
-            self._force_update_db(self._db)
-            return True
-        return False
-
-    def _force_update_db(self, db_path: str):
         data = {
             'users': self._users,
             'packs': self._public_packs
         }
-        fp = open(db_path, 'wb')
+        fp = open(self._db, 'wb')
         pickle.dump(data, fp)
         fp.close()

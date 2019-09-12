@@ -14,7 +14,7 @@ IMG_DIR = ROOT_DIR + '/images/'
 IMG_NAME = 'img'
 AVATAR_NAME = 'avatar'
 
-logging.basicConfig(
+logging.basicConfig(filename='picobot.log',
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
 )
 
@@ -58,7 +58,9 @@ def create_pack(bot: Bot, update: Update):
         sticker = bot.get_sticker_set(name).stickers[0]
         update.message.reply_sticker(sticker)
         repository().add_pack_to_user(user, name)
-    except Exception:
+    except Exception as exc:
+        logger.error("Exception on Create Pack. User %d Pack %s", user.id, name)
+        logger.error(exc)
         update.message.reply_text(responses.ERROR_MSG)
     png_sticker.close()
 
@@ -141,7 +143,9 @@ def add_text(bot: Bot, msg: Message, user_id: int, pack_name: str, emoji: str):
         bot.add_sticker_to_set(user_id=user_id, name=pack_name, png_sticker=png_sticker, emojis=emoji)
         sticker = bot.get_sticker_set(pack_name).stickers[-1]
         msg.reply_sticker(sticker)
-    except Exception:
+    except Exception as exc:
+        logger.error("Exception on Create Pack. User %d Pack %s", user.id, name)
+        logger.error(exc)
         return False
     finally:
         png_sticker.close()
