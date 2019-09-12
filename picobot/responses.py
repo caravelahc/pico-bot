@@ -15,6 +15,8 @@ ADDED_STICKER = 'Sticker adicionado!'
 
 REMOVED_STICKER = 'Sticker excluído!'
 
+PACK_PRIVACY_UPDATED = 'Configuração de privacidade do pack atualizada.'
+
 REMOVE_STICKER_HELP = """Comando inválido.
 - Responda a um sticker que você possui com o comando /delsticker
 - Ou use /delsticker <NomeDoPack> <X>

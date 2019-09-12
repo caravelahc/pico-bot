@@ -93,23 +93,22 @@ def add_sticker(bot: Bot, update: Update):
     # check if it's image, file, text, or sticker
     if msg_type == MsgType.REP_TEXT:
         if add_text(bot, msg, user_id, pack_name, emoji):
-            response = responses.ADDED_STICKER
+            return
     elif msg_type == MsgType.PHOTO:
         if add_photo(bot, msg, user_id, pack_name, emoji, False):
-            response = responses.ADDED_STICKER
+            return
     elif msg_type == MsgType.REP_PHOTO:
         if add_photo(bot, msg, user_id, pack_name, emoji, True):
-            response = responses.ADDED_STICKER
+            return
     elif msg_type == MsgType.DOCUMENT:
         if add_document(bot, msg, user_id, pack_name, emoji, False):
-            response = responses.ADDED_STICKER
+            return
     elif msg_type == MsgType.REP_DOCUMENT:
         if add_document(bot, msg, user_id, pack_name, emoji, True):
-            response = responses.ADDED_STICKER
-
+            return
     elif msg_type in [MsgType.STICKER, MsgType.REP_STICKER]:
         if insert_sticker_in_pack(bot, msg, user_id, pack_name, emoji):
-            response = responses.ADDED_STICKER
+            return
 
     # check for errors
 
@@ -272,6 +271,7 @@ def _set_pack_public(bot: Bot, update: Update, is_public: bool):
         # check if user is pack's owner
         if repository().check_permission(user_id, pack_name):
             repository().set_pack_public(pack_name, is_public)
+            msg.reply_text(responses.PACK_PRIVACY_UPDATED)
         else:
             msg.reply_text(responses.NO_PERMISSION)
             return
