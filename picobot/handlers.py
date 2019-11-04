@@ -38,7 +38,8 @@ def creator_only(func):
 
 
 def build_pack_name(title: str, bot: Bot) -> str:
-    return f'{slugify(title, separator="_")}_by_{bot.username}'
+    slug = slugify(title, separator="_", lowercase=False)
+    return f'{slug}_by_{bot.username}'
 
 
 def start(bot, update):
