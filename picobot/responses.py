@@ -49,4 +49,6 @@ ou como resposta a um sticker existente para apenas adicioná-lo ao pack.
     /delsticker <NomeDoPack> <Posição> - remove o sticker do pack (não recuperável)
     /setdefaultpack <NomeDoPack> - configura seu pack padrão
     /setpublic <NomeDoPack> - torna seu pack público (qualquer pessoa pode editá-lo, adicionar e remover stickers)
-    /setprivate <NomeDoPack> - torna seu pack privado para edição (qualquer pessoa ainda pode visualizá-lo e utilizá-lo) """
+    /setprivate <NomeDoPack> - torna seu pack privado para edição (qualquer pessoa ainda pode visualizá-lo e utilizá-lo)
+
+    Para utilizar espaços no nome do pacote, escreva-o entre aspas simples ou duplas."""
