@@ -1,8 +1,11 @@
 import logging
+import shlex
 import os
 from telegram import Bot, Update, Message
 
 from functools import wraps
+
+from slugify import slugify
 
 from .config import CREATOR_ID, ROOT_DIR
 from picobot import responses
@@ -34,6 +37,10 @@ def creator_only(func):
     return new_func
 
 
+def build_pack_name(title: str, bot: Bot) -> str:
+    return f'{slugify(title, separator="_")}_by_{bot.username}'
+
+
 def start(bot, update):
     """Send a message when the command /start is issued."""
     update.message.reply_text(responses.GREETING)
@@ -41,16 +48,17 @@ def start(bot, update):
 
 def create_pack(bot: Bot, update: Update):
     user = update.message.from_user
+
     if not check_msg_format(update.message.text):
         update.message.reply_text(responses.INVALID_MSG)
-    splittext = update.message.text.split()
+        return
+
+    splittext = shlex.split(update.message.text)
+
     title = splittext[1]
-    name = title + '_by_' + bot.username
+    name = build_pack_name(title, bot)
     png_sticker = open(f'{IMG_DIR}caravela.png', 'rb')
-    if len(splittext) > 2:
-        emoji = update.message.text.split()[2]
-    else:
-        emoji = DEFAULT_EMOJI
+    emoji = splittext[2] if len(splittext) > 2 else DEFAULT_EMOJI
 
     # Create Pack
     try:
@@ -67,24 +75,31 @@ def create_pack(bot: Bot, update: Update):
 
 def add_sticker(bot: Bot, update: Update):
     msg = update.message
+
     msg_type = get_msg_type(msg)
     response = responses.ERROR_MSG
-
     user_id = msg.from_user.id
-    splittext = msg.text.split()
+    splittext = shlex.split(msg.text)
+
+    title = splittext[1]
+
     if check_msg_format(msg.text):
-        pack_name = splittext[1] + '_by_' + bot.username
+        pack_name = build_pack_name(title, bot)
+
         # check if user is pack's owner
         if not repository().check_permission(user_id, pack_name):
             msg.reply_text(responses.NO_PERMISSION)
             return
+
     else:  # if pack name not informed check if user has default pack
         user = repository().users().get(user_id)
+
         if user is not None and user.def_pack is not None:
             pack_name = user.def_pack
         else:
             msg.reply_text(responses.INVALID_MSG)
             return
+
     if len(splittext) > 2:
         emoji = msg.text.split()[2]
     else:
@@ -224,8 +239,9 @@ def del_sticker(bot: Bot, update: Update):
     try:
         # user_id = msg.from_user.id
         if msg_type == MsgType.TEXT:
-            splittext = msg.text.split()
-            pack_name = splittext[1] + '_by_' + bot.username
+            splittext = shlex.split(msg.text)
+            title = splittext[1]
+            pack_name = build_pack_name(title, bot)
             pos = int(splittext[2])
             sticker_id = bot.get_sticker_set(pack_name).stickers[pos].file_id
         elif msg_type == MsgType.REP_STICKER:
@@ -243,7 +259,10 @@ def set_default_pack(bot: Bot, update: Update):
     user_id = msg.from_user.id
 
     if check_msg_format(msg.text):
-        pack_name = msg.text.split()[1] + '_by_' + bot.username
+        splittext = shlex.split(msg.text)
+        title = splittext[1]
+        pack_name = build_pack_name(title, bot)
+
         # check if user is pack's owner
         if repository().check_permission(user_id, pack_name):
             repository().users().get(user_id).def_pack = pack_name
@@ -267,7 +286,10 @@ def _set_pack_public(bot: Bot, update: Update, is_public: bool):
     user_id = msg.from_user.id
 
     if check_msg_format(msg.text):
-        pack_name = msg.text.split()[1] + '_by_' + bot.username
+        splittext = shlex.split(msg.text)
+        title = splittext[1]
+        pack_name = build_pack_name(title, bot)
+
         # check if user is pack's owner
         if repository().check_permission(user_id, pack_name):
             repository().set_pack_public(pack_name, is_public)
@@ -288,7 +310,10 @@ def add_pack_to_user(bot: Bot, update: Update):
             user = msg.reply_to_message.from_user
 
         if check_msg_format(msg.text):
-            pack_name = msg.text.split()[1] + '_by_' + bot.username
+            splittext = shlex.split(msg.text)
+            title = splittext[1]
+            pack_name = build_pack_name(title, bot)
+
             repository().add_pack_to_user(user, pack_name)
         else:
             msg.reply_text(responses.INVALID_MSG)

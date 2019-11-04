@@ -9,6 +9,7 @@ python = "^3.7"
 python-telegram-bot = "^11.1"
 dataset = "^1.1"
 pillow = "^6.1"
+python-slugify = "^4.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^3.0"
