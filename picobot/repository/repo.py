@@ -38,8 +38,7 @@ class Repo(object):
     def check_permission(self, user_id: int, pack_name: str):
         if pack_name in self._public_packs:
             return True
-        return user_id in self._users and \
-            pack_name in self._users[user_id].packs
+        return user_id in self._users and pack_name in self._users[user_id].packs
 
     def set_pack_public(self, pack_name: str, is_public: bool):
         if is_public:
@@ -58,10 +57,7 @@ class Repo(object):
             fp.close()
 
     def _update_db(self):
-        data = {
-            'users': self._users,
-            'packs': self._public_packs
-        }
+        data = {'users': self._users, 'packs': self._public_packs}
         fp = open(self._db, 'wb')
         pickle.dump(data, fp)
         fp.close()

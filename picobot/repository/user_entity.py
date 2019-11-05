@@ -1,8 +1,7 @@
 from telegram import User
 
 
-class UserEntity():
-
+class UserEntity:
     def __init__(self, t_user: User):
         self.t_user = t_user
         self.state = ''
