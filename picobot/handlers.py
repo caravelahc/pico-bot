@@ -1,16 +1,16 @@
 import logging
-import shlex
 import os
-from telegram import Bot, Update, Message
-
+import shlex
 from functools import wraps
 
 from slugify import slugify
+from telegram import Bot, Message, Update
+
+from picobot import responses
 
 from .config import CREATOR_ID, ROOT_DIR
-from picobot import responses
 from .msg_type import MsgType
-from .painter import sticker_from_text, sticker_from_image
+from .painter import sticker_from_image, sticker_from_text
 from .repository.repo import repository
 
 IMG_DIR = ROOT_DIR + '/images/'

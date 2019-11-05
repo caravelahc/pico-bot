@@ -1,7 +1,8 @@
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
+from telegram.ext import CommandHandler, Filters, MessageHandler, Updater
 
 from picobot import handlers
-from .config import TOKEN, DB_PATH
+
+from .config import DB_PATH, TOKEN
 from .repository.repo import repository
 
 

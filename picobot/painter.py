@@ -1,4 +1,5 @@
 from PIL import Image, ImageDraw, ImageFont
+
 from .config import ROOT_DIR
 
 # for testing purpose only
