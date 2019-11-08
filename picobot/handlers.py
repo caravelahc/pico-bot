@@ -102,7 +102,7 @@ def add_sticker(bot: Bot, update: Update):
             return
 
     if len(splittext) > 2:
-        emoji = msg.text.split()[2]
+        emoji = splittext[2]
     else:
         emoji = DEFAULT_EMOJI
 
