@@ -236,23 +236,29 @@ def insert_sticker_in_pack(bot: Bot, msg: Message, user_id: int, pack_name: str,
 def del_sticker(bot: Bot, update: Update):
     msg: Message = update.message
     msg_type = get_msg_type(msg)
+    user_id = msg.from_user.id
 
     try:
-        # user_id = msg.from_user.id
         if msg_type == MsgType.TEXT:
             splittext = shlex.split(msg.text)
             title = splittext[1]
-            pack_name = build_pack_name(title, bot)
             pos = int(splittext[2])
+
+            pack_name = build_pack_name(title, bot)
             sticker_id = bot.get_sticker_set(pack_name).stickers[pos].file_id
         elif msg_type == MsgType.REP_STICKER:
+            pack_name = msg.reply_to_message.sticker.set_name
             sticker_id = msg.reply_to_message.sticker.file_id
 
+        if not repository().check_permission(user_id, pack_name):
+            msg.reply_text(responses.NO_PERMISSION)
+            return
+
         bot.delete_sticker_from_set(sticker_id)
+        msg.reply_text(responses.REMOVED_STICKER)
+
     except Exception:
-        update.message.reply_text(responses.REMOVE_STICKER_HELP)
-        return
-    update.message.reply_text(responses.REMOVED_STICKER)
+        msg.reply_text(responses.REMOVE_STICKER_HELP)
 
 
 def set_default_pack(bot: Bot, update: Update):
