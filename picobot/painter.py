@@ -1,4 +1,5 @@
 from PIL import Image, ImageDraw, ImageFont
+
 from .config import ROOT_DIR
 
 # for testing purpose only
@@ -27,23 +28,17 @@ TIME_COLOR = "#6A7B8C"
 LINE_SPACE = 4
 
 
-def draw_balloon(
-    img_draw: ImageDraw.Draw, xy: list, fill=None, width=0
-):
+def draw_balloon(img_draw: ImageDraw.Draw, xy: list, fill=None, width=0):
     r_x0 = xy[0]
     r_y0 = xy[1] + BOX_RADIUS
     r_x1 = xy[2]
     r_y1 = xy[3] - BOX_RADIUS
-    img_draw.rectangle(
-        [r_x0, r_y0, r_x1, r_y1], fill=fill, width=width
-    )
+    img_draw.rectangle([r_x0, r_y0, r_x1, r_y1], fill=fill, width=width)
     r_x0 = xy[0] + BOX_RADIUS
     r_y0 = xy[1]
     r_x1 = xy[2] - BOX_RADIUS
     r_y1 = xy[3]
-    img_draw.rectangle(
-        [r_x0, r_y0, r_x1, r_y1], fill=fill, width=width
-    )
+    img_draw.rectangle([r_x0, r_y0, r_x1, r_y1], fill=fill, width=width)
     diam = 2 * BOX_RADIUS
     c_x0 = xy[0]
     c_y0 = xy[1]
@@ -87,7 +82,7 @@ def draw_message(
     text="Oi, eu sou o Jojo",
     fill=TEXT_COLOR,
     font=None,
-    user_size=[0,0]
+    user_size=[0, 0],
 ):
     x0 = xy[0] + MSG_PADDING_H
     y0 = xy[1] + MSG_PADDING_V + user_size[1] + LINE_SPACE
@@ -95,11 +90,7 @@ def draw_message(
 
 
 def draw_time(
-    txt_draw: ImageDraw.ImageDraw,
-    xy: list,
-    text="04:20",
-    fill=TEXT_COLOR,
-    font=None
+    txt_draw: ImageDraw.ImageDraw, xy: list, text="04:20", fill=TEXT_COLOR, font=None
 ):
     tw = txt_draw.textsize(text, font=font)
     x0 = xy[2] - TIME_PADDING_H - tw[0]
@@ -113,17 +104,21 @@ def draw_avatar(img, xy_balloon: list, avatar_path: str):
     y0 = xy_balloon[3] - AVATAR_SIZE
     y1 = xy_balloon[3]
     xy = [MARGIN, y0, MARGIN + AVATAR_SIZE, y1]
-    box = tuple(a-2 for a in xy[0:2])
+    box = tuple(a - 2 for a in xy[0:2])
     size = AVATAR_SIZE + 4
     avatar = Image.open(avatar_path).convert(mode='RGBA')
     if avatar.width == avatar.height:
         avatar = avatar.resize((size, size), resample=Image.ANTIALIAS)
     elif avatar.width > avatar.height:
         ratio = size / avatar.width
-        avatar = avatar.resize((size, int(ratio * avatar.height)), resample=Image.ANTIALIAS)
+        avatar = avatar.resize(
+            (size, int(ratio * avatar.height)), resample=Image.ANTIALIAS
+        )
     else:
         ratio = size / avatar.height
-        avatar = avatar.resize((int(ratio * avatar.width), size), resample=Image.ANTIALIAS)
+        avatar = avatar.resize(
+            (int(ratio * avatar.width), size), resample=Image.ANTIALIAS
+        )
 
     avatar_mask = generate_avatar_mask(img.size, xy)
     tmp = Image.new('RGBA', img.size)
@@ -131,7 +126,9 @@ def draw_avatar(img, xy_balloon: list, avatar_path: str):
     img.paste(tmp, mask=avatar_mask)
 
 
-def sticker_from_text(user_id: int, username: str, text: str, avatar_path: str, msg_time: str):
+def sticker_from_text(
+    user_id: int, username: str, text: str, avatar_path: str, msg_time: str
+):
     size = (512, 256)
     transparent = (0, 0, 0, 0)
 
@@ -141,7 +138,7 @@ def sticker_from_text(user_id: int, username: str, text: str, avatar_path: str, 
     time_font = ImageFont.truetype(font=f"{FONT_DIR}OpenSans-Regular.ttf", size=13)
 
     username = username if (len(username) < 26) else f'{username[0:25]}...'
-    limit_is_user = (len(username) >= len(text))
+    limit_is_user = len(username) >= len(text)
     aux_img = ImageDraw.Draw(Image.new('RGBA', size, transparent))
     title_size = aux_img.textsize(username, font=bold_font)
     text_size = aux_img.textsize(text, font=font)
@@ -156,8 +153,14 @@ def sticker_from_text(user_id: int, username: str, text: str, avatar_path: str, 
             text_size = aux_img.multiline_textsize(aux_text, font=font)
             final_text = aux_text
         bigger_size = text_size
-    box_size = (bigger_size[0] + 2 * MSG_PADDING_H,
-                title_size[1] + bigger_size[1] + 2 * MSG_PADDING_V + time_size[1] + 2 * LINE_SPACE)
+    box_size = (
+        bigger_size[0] + 2 * MSG_PADDING_H,
+        title_size[1]
+        + bigger_size[1]
+        + 2 * MSG_PADDING_V
+        + time_size[1]
+        + 2 * LINE_SPACE,
+    )
 
     b_width = max(BOX_MIN_WIDTH, box_size[0])
     b_height = box_size[1]

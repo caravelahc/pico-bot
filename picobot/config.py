@@ -1,5 +1,4 @@
 import json
-
 from os import environ, path
 from pathlib import Path
 
