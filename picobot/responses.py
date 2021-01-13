@@ -6,7 +6,7 @@ INVALID_DOC = "O arquivo de imagem deve estar em formato PNG \
 com uma camada transparente e caber em um quadrado 512x512 \
 (um dos lados deve ter 512px e o outro 512px ou menos)."
 
-ERROR_DOWNLOAD_PHOTO = "Erro ao tentar baixar foto do usuário."
+ERROR_DOWNLOAD_PHOTO = "Não foi possível baixar a foto do usuário."
 
 USER_NO_PACK = "Você ainda não tem nenhum pacote de sticker. \
 Por favor, primeiro crie um utilizando o comando /newpack para criar um novo pacote de stickers."

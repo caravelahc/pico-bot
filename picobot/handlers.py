@@ -90,9 +90,8 @@ def add_sticker(bot: Bot, update: Update):
     user_id = msg.from_user.id
     splittext = shlex.split(msg.text)
 
-    title = splittext[1]
-
     if check_msg_format(msg.text):
+        title = splittext[1]
         pack_name = build_pack_name(title, bot)
 
         # check if user is pack's owner
@@ -170,7 +169,7 @@ def add_text(bot: Bot, msg: Message, user_id: int, pack_name: str, emoji: str):
         sticker = bot.get_sticker_set(pack_name).stickers[-1]
         msg.reply_sticker(sticker)
     except Exception as exc:
-        logger.error("Exception on Create Pack. User %d Pack %s", user.id, name)
+        logger.error("Exception on Create Pack. User %s (id %d) Pack %s", username, user_id, pack_name)
         logger.error(exc)
         return False
     finally:
