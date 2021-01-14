@@ -1,8 +1,8 @@
 import json
-from os import environ, path
+from os import environ
 from pathlib import Path
 
-ROOT_DIR = path.dirname(path.abspath(__file__))
+ROOT_DIR = Path(__file__).absolute().parent
 
 try:
     CONFIG_DIR = Path(environ['XDG_CONFIG_HOME'], 'picobot')

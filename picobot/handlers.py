@@ -13,9 +13,9 @@ from .msg_type import MsgType
 from .painter import sticker_from_image, sticker_from_text
 from .repository.repo import repository
 
-IMG_DIR = ROOT_DIR + '/images/'
-IMG_NAME = 'img'
-AVATAR_NAME = 'avatar'
+IMG_DIR = ROOT_DIR / 'images'
+IMG_PREFIX = 'img'
+AVATAR_PREFIX = 'avatar'
 
 logging.basicConfig(
     filename='picobot.log',
@@ -60,7 +60,7 @@ def create_pack(bot: Bot, update: Update):
 
     title = splittext[1]
     name = build_pack_name(title, bot)
-    png_sticker = open(f'{IMG_DIR}caravela.png', 'rb')
+    png_sticker = open(IMG_DIR / 'caravela.png', 'rb')
     emoji = splittext[2] if len(splittext) > 2 else DEFAULT_EMOJI
 
     # Create Pack
@@ -153,10 +153,11 @@ def add_text(bot: Bot, msg: Message, user_id: int, pack_name: str, emoji: str):
     avatar_path = ''
     try:
         photo = photos[0][0]
-        avatar_path = IMG_DIR + AVATAR_NAME + str(other_user_id) + '.jpg'
+        avatar_path = IMG_DIR / f'{AVATAR_PREFIX}{other_user_id}.jpg'
         bot.get_file(photo.file_id).download(custom_path=avatar_path)
     except Exception:
         msg.reply_text(responses.ERROR_DOWNLOAD_PHOTO)
+        avatar_path = ''
 
     text = msg.reply_to_message.text
     # save as png
@@ -198,7 +199,7 @@ def add_photo(
         photo = msg.reply_to_message.photo[-1]
     else:
         photo = msg.photo[-1]
-    img_path = IMG_DIR + IMG_NAME + str(user_id) + '.jpg'
+    img_path = IMG_DIR / f'{IMG_PREFIX}{user_id}.jpg'
     try:
         bot.get_file(photo.file_id).download(custom_path=img_path)
         # resize and save as png
@@ -239,7 +240,7 @@ def insert_sticker_in_pack(
 ):
     sticker_id = msg.reply_to_message.sticker.file_id
 
-    img_path = IMG_DIR + IMG_NAME + str(user_id) + '.jpg'
+    img_path = IMG_DIR / f'{IMG_PREFIX}{user_id}.jpg'
     try:
         bot.get_file(sticker_id).download(custom_path=img_path)
         # resize and save as png
