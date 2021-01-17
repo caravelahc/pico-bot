@@ -1,4 +1,5 @@
 from PIL import Image, ImageDraw, ImageFont
+from emoji import emoji_lis
 
 from .config import ROOT_DIR
 
@@ -25,6 +26,7 @@ TITLE_COLOR = "#338cf3"
 TEXT_COLOR = "#dddddd"
 TIME_COLOR = "#6A7B8C"
 LINE_SPACE = 4
+EMOJI_JOINER = chr(0xFE0F)
 
 
 def draw_balloon(img_draw: ImageDraw.Draw, xy: list, fill=None, width=0):
@@ -85,7 +87,36 @@ def draw_message(
 ):
     x0 = xy[0] + MSG_PADDING_H
     y0 = xy[1] + MSG_PADDING_V + user_size[1] + LINE_SPACE
-    txt_draw.text((x0, y0), text, font=font, fill=fill)
+    symbola_font = ImageFont.truetype(font=str(FONT_DIR / 'Symbola.ttf'), size=16)
+    emoji_locations = emoji_lis(text)
+    indexes = [0]
+
+    # some encoding shenanigans for complex emojis
+    text = text.replace('\u200d', EMOJI_JOINER)
+
+    def print_emoji(em, _x0):
+        current_text = em['emoji']
+        txt_draw.text(
+            (_x0, y0 + 4), text=em['emoji'], font=symbola_font, fill=TEXT_COLOR
+        )
+        incr = 1
+        if len(text) > em['location'] + 1 and text[em['location'] + 1] == EMOJI_JOINER:
+            incr = 2
+        indexes.append(em['location'] + incr)
+        return txt_draw.textsize(current_text, font=symbola_font)[0]
+
+    for em in emoji_locations:
+        last_index = indexes[-1]
+        if em['location'] - 1 < last_index:  # last drawn symbol was an emoji
+            x0 += print_emoji(em, x0)
+        else:
+            current_text = text[last_index : em['location']]
+            txt_draw.text((x0, y0), text=current_text, font=font, fill=TEXT_COLOR)
+            x0 += txt_draw.textsize(current_text, font=font)[0]
+            x0 += print_emoji(em, x0)
+    if indexes[-1] < len(text):
+        current_text = text[indexes[-1] :]
+        txt_draw.text((x0, y0), text=current_text, font=font, fill=TEXT_COLOR)
 
 
 def draw_time(
