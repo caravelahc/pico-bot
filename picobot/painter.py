@@ -1,3 +1,4 @@
+import textwrap
 from PIL import Image, ImageDraw, ImageFont
 
 from .config import ROOT_DIR
@@ -205,14 +206,7 @@ def sticker_from_text(
 
 
 def wrapped_text(text: str, line_limit=25):
-    words = text.split(' ')
-    lines = [words[0]]
-    for w in words[1:]:
-        if len(lines[-1]) + len(w) < line_limit:
-            lines[-1] += ' ' + w
-        else:
-            lines.append(w)
-    return '\n'.join(lines)
+    return '\n'.join(textwrap.wrap(text, width=line_limit))
 
 
 def sticker_from_image(jpg_path: str):

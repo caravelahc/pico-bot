@@ -169,7 +169,12 @@ def add_text(bot: Bot, msg: Message, user_id: int, pack_name: str, emoji: str):
         sticker = bot.get_sticker_set(pack_name).stickers[-1]
         msg.reply_sticker(sticker)
     except Exception as exc:
-        logger.error("Exception on Create Pack. User %s (id %d) Pack %s", username, user_id, pack_name)
+        logger.error(
+            "Exception on Create Pack. User %s (id %d) Pack %s",
+            username,
+            user_id,
+            pack_name,
+        )
         logger.error(exc)
         return False
     finally:
