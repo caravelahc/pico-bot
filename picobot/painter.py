@@ -2,11 +2,10 @@ from PIL import Image, ImageDraw, ImageFont
 
 from .config import ROOT_DIR
 
-# for testing purpose only
-# ROOT_DIR = '/home/diogo/Documents/CCO/Python/pico-bot/picobot'
 
-IMG_DIR = ROOT_DIR + '/images/'
-IMG_NAME = 'img'
+IMG_DIR = ROOT_DIR / 'images'
+FONT_DIR = ROOT_DIR / 'fonts'
+IMG_PREFIX = 'img'
 AVATAR_MASK_NAME = 'avatar_mask.png'
 
 AVATAR_SIZE = 42
@@ -98,14 +97,29 @@ def draw_time(
     txt_draw.text((x0, y0), text, font=font, fill=TIME_COLOR)
 
 
-def draw_avatar(img, xy_balloon: list, avatar_path: str):
-    if avatar_path == '':
-        return
+def draw_avatar(
+    img: Image,
+    draw: ImageDraw.ImageDraw,
+    username: str,
+    xy_balloon: list,
+    avatar_path: str,
+):
     y0 = xy_balloon[3] - AVATAR_SIZE
     y1 = xy_balloon[3]
     xy = [MARGIN, y0, MARGIN + AVATAR_SIZE, y1]
     box = tuple(a - 2 for a in xy[0:2])
     size = AVATAR_SIZE + 4
+    if avatar_path == '':
+        draw.ellipse(xy, fill=TITLE_COLOR)
+        avatar_font = ImageFont.truetype(
+            font=str(FONT_DIR / 'OpenSans-SemiBold.ttf'), size=20
+        )
+        avatar_center = ((xy[0] + xy[2]) / 2, (xy[1] + xy[3]) / 2)
+        draw.text(
+            avatar_center, username[0], anchor='mm', font=avatar_font, fill='#FFFFFF'
+        )
+        return
+
     avatar = Image.open(avatar_path).convert(mode='RGBA')
     if avatar.width == avatar.height:
         avatar = avatar.resize((size, size), resample=Image.ANTIALIAS)
@@ -132,10 +146,9 @@ def sticker_from_text(
     size = (512, 256)
     transparent = (0, 0, 0, 0)
 
-    FONT_DIR = ROOT_DIR + '/fonts/'
-    bold_font = ImageFont.truetype(font=f"{FONT_DIR}OpenSans-Bold.ttf", size=16)
-    font = ImageFont.truetype(font=f"{FONT_DIR}OpenSans-SemiBold.ttf", size=16)
-    time_font = ImageFont.truetype(font=f"{FONT_DIR}OpenSans-Regular.ttf", size=13)
+    bold_font = ImageFont.truetype(font=str(FONT_DIR / 'OpenSans-Bold.ttf'), size=16)
+    font = ImageFont.truetype(font=str(FONT_DIR / 'OpenSans-SemiBold.ttf'), size=16)
+    time_font = ImageFont.truetype(font=str(FONT_DIR / 'OpenSans-Regular.ttf'), size=13)
 
     username = username if (len(username) < 26) else f'{username[0:25]}...'
     limit_is_user = len(username) >= len(text)
@@ -174,7 +187,7 @@ def sticker_from_text(
 
     img = Image.new("RGBA", size, transparent)
     dr = ImageDraw.Draw(img)
-    draw_avatar(img, xy_balloon=xy_balloon, avatar_path=avatar_path)
+    draw_avatar(img, dr, username, xy_balloon=xy_balloon, avatar_path=avatar_path)
 
     draw_balloon(dr, xy=xy_balloon, fill=BOX_COLOR)
 
@@ -185,7 +198,7 @@ def sticker_from_text(
     ratio = 512 / img_width
     sample = Image.ANTIALIAS
     img = img.resize((512, int(ratio * size[1])), resample=sample)
-    img_path = IMG_DIR + IMG_NAME + str(user_id) + '.png'
+    img_path = IMG_DIR / f'{IMG_PREFIX}{user_id}.png'
     img.save(img_path)
     img.close()
     return img_path
