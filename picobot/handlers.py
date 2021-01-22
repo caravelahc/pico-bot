@@ -76,7 +76,12 @@ def create_pack(bot: Bot, update: Update):
         update.message.reply_sticker(sticker)
         repository().add_pack_to_user(user, name)
     except Exception as exc:
-        logger.error("Exception on Create Pack. User %d Pack %s", user.id, name)
+        logger.error("Exception on Create Pack. User %s (id %d) Pack %s",
+            user.first_name,
+            user.id,
+            name,
+        )
+
         logger.error(exc)
         update.message.reply_text(responses.ERROR_MSG)
     png_sticker.close()
@@ -169,7 +174,12 @@ def add_text(bot: Bot, msg: Message, user_id: int, pack_name: str, emoji: str):
         sticker = bot.get_sticker_set(pack_name).stickers[-1]
         msg.reply_sticker(sticker)
     except Exception as exc:
-        logger.error("Exception on Create Pack. User %s (id %d) Pack %s", username, user_id, pack_name)
+        logger.error(
+            "Exception on add_text. User %s (id %d) Pack %s",
+            username,
+            user_id,
+            pack_name,
+        )
         logger.error(exc)
         return False
     finally:
@@ -271,6 +281,10 @@ def del_sticker(bot: Bot, update: Update):
         elif msg_type == MsgType.REP_STICKER:
             pack_name = msg.reply_to_message.sticker.set_name
             sticker_id = msg.reply_to_message.sticker.file_id
+
+        if pack_name is None:
+            msg.reply_text('Não é possível remover o sticker de um pack inexistente.')
+            return
 
         if not repository().check_permission(user_id, pack_name):
             msg.reply_text(responses.NO_PERMISSION)

@@ -15,7 +15,8 @@ from .geometry import (
     BOX_RADIUS,
     FONT_SIZE,
     LINE_SPACE,
-    Point, Box
+    Point,
+    Box,
 )
 
 IMG_DIR = ROOT_DIR / 'images'
@@ -85,7 +86,10 @@ def draw_message(
     font=None,
     user_size=[0, 0],
 ):
-    current_position = Point(points.top_left.x + MSG_PADDING_H, points.top_left.y + MSG_PADDING_V + user_size[1] + LINE_SPACE)
+    current_position = Point(
+        points.top_left.x + MSG_PADDING_H,
+        points.top_left.y + MSG_PADDING_V + user_size[1] + LINE_SPACE,
+    )
     symbola_font = ImageFont.truetype(font=str(FONT_DIR / 'Symbola.ttf'), size=16)
     emoji_locations = emoji_lis(text)
     indexes = [0]
@@ -97,7 +101,10 @@ def draw_message(
     def draw_emoji(em: dict):
         current_text = em['emoji']
         txt_draw.text(
-            (current_position.x, current_position.y + 4), text=em['emoji'], font=symbola_font, fill=TEXT_COLOR
+            (current_position.x, current_position.y + 4),
+            text=em['emoji'],
+            font=symbola_font,
+            fill=TEXT_COLOR,
         )
         incr = 1
         if len(text) > em['location'] + 1 and text[em['location'] + 1] == EMOJI_JOINER:
@@ -108,12 +115,16 @@ def draw_message(
     def draw_text(text: str):
         lines = text.split('\n')
         for line in lines[:-1]:
-            txt_draw.text(current_position.to_tuple(), text=line, font=font, fill=TEXT_COLOR)
+            txt_draw.text(
+                current_position.to_tuple(), text=line, font=font, fill=TEXT_COLOR
+            )
             textsize = txt_draw.textsize(' ', font=font)
             current_position.x = points.top_left.x + MSG_PADDING_H
             current_position.y += textsize[1] + LINE_SPACE
         text = lines[-1]
-        txt_draw.text(current_position.to_tuple(), text=text, font=font, fill=TEXT_COLOR)
+        txt_draw.text(
+            current_position.to_tuple(), text=text, font=font, fill=TEXT_COLOR
+        )
         displacement = txt_draw.textsize(text, font=font)
         current_position.x += displacement[0]
 
@@ -126,7 +137,7 @@ def draw_message(
             draw_text(current_text)
             draw_emoji(em)
     if indexes[-1] < len(text):
-        current_text = text[indexes[-1]:]
+        current_text = text[indexes[-1] :]
         draw_text(current_text)
 
 
@@ -188,8 +199,12 @@ def sticker_from_text(
     size = (512, 256)
     transparent = (0, 0, 0, 0)
 
-    bold_font = ImageFont.truetype(font=str(FONT_DIR / 'OpenSans-Bold.ttf'), size=FONT_SIZE)
-    font = ImageFont.truetype(font=str(FONT_DIR / 'OpenSans-SemiBold.ttf'), size=FONT_SIZE)
+    bold_font = ImageFont.truetype(
+        font=str(FONT_DIR / 'OpenSans-Bold.ttf'), size=FONT_SIZE
+    )
+    font = ImageFont.truetype(
+        font=str(FONT_DIR / 'OpenSans-SemiBold.ttf'), size=FONT_SIZE
+    )
     time_font = ImageFont.truetype(font=str(FONT_DIR / 'OpenSans-Regular.ttf'), size=13)
 
     username = username if (len(username) < 26) else f'{username[0:25]}...'
@@ -197,8 +212,8 @@ def sticker_from_text(
     aux_img = ImageDraw.Draw(Image.new('RGBA', size, transparent))
     title_size = aux_img.textsize(username, font=bold_font)
     text_size = aux_img.textsize(text, font=font)
-    additional_space_for_emojis = 5*emoji_count(text)
-    text_size = (text_size[0]+additional_space_for_emojis, text_size[1])
+    additional_space_for_emojis = 5 * emoji_count(text)
+    text_size = (text_size[0] + additional_space_for_emojis, text_size[1])
     time_size = aux_img.textsize('04:20', font=time_font)
     final_text = text
 
@@ -231,12 +246,18 @@ def sticker_from_text(
 
     img = Image.new("RGBA", size, transparent)
     dr = ImageDraw.Draw(img)
-    draw_avatar(img, dr, username, points_balloon=points_balloon, avatar_path=avatar_path)
+    draw_avatar(
+        img, dr, username, points_balloon=points_balloon, avatar_path=avatar_path
+    )
 
     draw_balloon(dr, points=points_balloon, fill=BOX_COLOR)
 
-    draw_username(dr, position=points_balloon.top_left, font=bold_font, username=username)
-    draw_message(dr, points=points_balloon, font=font, text=final_text, user_size=title_size)
+    draw_username(
+        dr, position=points_balloon.top_left, font=bold_font, username=username
+    )
+    draw_message(
+        dr, points=points_balloon, font=font, text=final_text, user_size=title_size
+    )
     draw_time(dr, text=msg_time, points=points_balloon, font=time_font)
 
     ratio = 512 / img_width

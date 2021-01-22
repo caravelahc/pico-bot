@@ -34,7 +34,15 @@ class Box:
         self.bottom_right = Point(x1, y1)
 
     def center(self):
-        return Point((self.top_left.x + self.bottom_right.x) / 2, (self.top_left.y + self.bottom_right.y) / 2)
+        return Point(
+            (self.top_left.x + self.bottom_right.x) / 2,
+            (self.top_left.y + self.bottom_right.y) / 2,
+        )
 
     def to_list(self):
-        return [self.top_left.x, self.top_left.y, self.bottom_right.x, self.bottom_right.y]
+        return [
+            self.top_left.x,
+            self.top_left.y,
+            self.bottom_right.x,
+            self.bottom_right.y,
+        ]
