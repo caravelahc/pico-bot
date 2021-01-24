@@ -10,6 +10,7 @@ python-telegram-bot = "^11.1"
 dataset = "^1.1"
 pillow = "^8.0"
 python-slugify = "^4.0"
+emoji = "^0.6.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^3.0"
