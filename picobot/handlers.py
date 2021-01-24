@@ -18,7 +18,7 @@ IMG_PREFIX = 'img'
 AVATAR_PREFIX = 'avatar'
 
 logging.basicConfig(
-    filename='picobot.log',
+    filename='log_picobot.log',
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     level=logging.INFO,
 )
@@ -213,13 +213,13 @@ def add_photo(
         bot.get_file(photo.file_id).download(custom_path=img_path)
         # resize and save as png
         img_path = sticker_from_image(img_path)
-        png_sticker = open(img_path, 'rb')
-        bot.add_sticker_to_set(
-            user_id=user_id, name=pack_name, png_sticker=png_sticker, emojis=emoji
-        )
-        sticker = bot.get_sticker_set(pack_name).stickers[-1]
-        msg.reply_sticker(sticker)
-    except Exception:
+        with open(str(img_path), 'rb') as png_sticker:
+            bot.add_sticker_to_set(
+                user_id=user_id, name=pack_name, png_sticker=png_sticker, emojis=emoji
+            )
+            sticker = bot.get_sticker_set(pack_name).stickers[-1]
+            msg.reply_sticker(sticker)
+    except Exception as e:
         return False
     return True
 
@@ -251,16 +251,23 @@ def insert_sticker_in_pack(
 
     img_path = IMG_DIR / f'{IMG_PREFIX}{user_id}.jpg'
     try:
-        bot.get_file(sticker_id).download(custom_path=img_path)
+        sticker_file = bot.get_file(sticker_id)
+        sticker_file.download(custom_path=str(img_path))
         # resize and save as png
         img_path = sticker_from_image(img_path)
-        png_sticker = open(img_path, 'rb')
-        bot.add_sticker_to_set(
-            user_id=user_id, name=pack_name, png_sticker=png_sticker, emojis=emoji
+        with open(img_path, 'rb') as png_sticker:
+            bot.add_sticker_to_set(
+                user_id=user_id, name=pack_name, png_sticker=png_sticker, emojis=emoji
+            )
+            sticker = bot.get_sticker_set(pack_name).stickers[-1]
+            msg.reply_sticker(sticker)
+    except Exception as exc:
+        logger.error("Exception inserting sticker in pack. User id %d Pack %s",
+            user_id,
+            pack_name,
         )
-        sticker = bot.get_sticker_set(pack_name).stickers[-1]
-        msg.reply_sticker(sticker)
-    except Exception:
+
+        logger.error(exc)
         return False
     return True
 

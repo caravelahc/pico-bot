@@ -1,4 +1,4 @@
-from typing import Tuple
+from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 from emoji import emoji_lis, emoji_count
 
@@ -280,7 +280,7 @@ def wrapped_text(text: str, line_limit=25):
     return '\n'.join(lines)
 
 
-def sticker_from_image(jpg_path: str):
+def sticker_from_image(jpg_path: Path):
     img: Image = Image.open(jpg_path)
     if img.width >= img.height:
         ratio = 512 / img.width
@@ -288,7 +288,7 @@ def sticker_from_image(jpg_path: str):
     else:
         ratio = 512 / img.height
         img = img.resize((int(ratio * img.width), 512), resample=Image.ANTIALIAS)
-    img_path = jpg_path[0:-4] + '.png'
+    img_path = jpg_path.with_suffix('.png')
     img.save(img_path)
     img.close()
     return img_path
