@@ -17,6 +17,8 @@ from .geometry import (
     BOX_RADIUS,
     FONT_SIZE,
     LINE_SPACE,
+    LINE_WIDTH_LIMIT,
+    MAX_NUMBER_OF_LINES,
     Point,
     Box,
 )
@@ -116,13 +118,13 @@ def draw_message(
 
     def draw_text(text: str):
         lines = text.split('\n')
+        y_displacement = txt_draw.textsize(' ', font=font)[1] + LINE_SPACE
         for line in lines[:-1]:
             txt_draw.text(
                 current_position.to_tuple(), text=line, font=font, fill=TEXT_COLOR
             )
-            textsize = txt_draw.textsize(' ', font=font)
             current_position.x = points.top_left.x + MSG_PADDING_H
-            current_position.y += textsize[1] + LINE_SPACE
+            current_position.y += y_displacement
         text = lines[-1]
         txt_draw.text(
             current_position.to_tuple(), text=text, font=font, fill=TEXT_COLOR
@@ -222,9 +224,18 @@ def sticker_from_text(
     if limit_is_user:
         bigger_size = title_size
     else:
-        if len(text) >= 26:
-            aux_text = wrapped_text(text, line_limit=26)
+        if len(text) >= LINE_WIDTH_LIMIT:
+            line_width = LINE_WIDTH_LIMIT
+            aux_text = wrapped_text(text, line_width=line_width)
             text_size = aux_img.multiline_textsize(aux_text, font=font)
+            # Try to make a better width/height ratio for long messages
+            for i in range(3):
+                if text_size[1] > 2*text_size[0]:
+                    line_width *= 2
+                    aux_text = wrapped_text(text, line_width=line_width, max_lines=MAX_NUMBER_OF_LINES)
+                    text_size = aux_img.multiline_textsize(aux_text, font=font)
+                else:
+                    break
             final_text = aux_text
         bigger_size = text_size
     box_size = (
@@ -262,31 +273,34 @@ def sticker_from_text(
     )
     draw_time(dr, text=msg_time, points=points_balloon, font=time_font)
 
-    ratio = 512 / img_width
-    sample = Image.ANTIALIAS
-    img = img.resize((512, int(ratio * size[1])), resample=sample)
+    img = resize_to_sticker_limits(img)
     img_path = IMG_DIR / f'{IMG_PREFIX}{user_id}.png'
     img.save(img_path)
     img.close()
     return img_path
 
 
-def wrapped_text(text: str, line_limit=25):
-    return '\n'.join(textwrap.wrap(text, width=line_limit))
+def wrapped_text(text: str, line_width=25, max_lines=None):
+    return '\n'.join(textwrap.wrap(text, width=line_width, max_lines=max_lines))
 
 
 def sticker_from_image(jpg_path: Path):
     img: Image = Image.open(jpg_path)
+    img = resize_to_sticker_limits(img)
+    img_path = jpg_path.with_suffix('.png')
+    img.save(img_path)
+    img.close()
+    return img_path
+
+
+def resize_to_sticker_limits(img: Image):
     if img.width >= img.height:
         ratio = 512 / img.width
         img = img.resize((512, int(ratio * img.height)), resample=Image.ANTIALIAS)
     else:
         ratio = 512 / img.height
         img = img.resize((int(ratio * img.width), 512), resample=Image.ANTIALIAS)
-    img_path = jpg_path.with_suffix('.png')
-    img.save(img_path)
-    img.close()
-    return img_path
+    return img
 
 
 def generate_avatar_mask(img_size: tuple, points: Box):
