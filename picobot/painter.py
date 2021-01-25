@@ -229,7 +229,7 @@ def sticker_from_text(
             aux_text = wrapped_text(text, line_width=line_width)
             text_size = aux_img.multiline_textsize(aux_text, font=font)
             # Try to make a better width/height ratio for long messages
-            for i in range(3):
+            for _ in range(3):
                 if text_size[1] > 2*text_size[0]:
                     line_width *= 2
                     aux_text = wrapped_text(text, line_width=line_width, max_lines=MAX_NUMBER_OF_LINES)
