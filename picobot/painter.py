@@ -285,11 +285,10 @@ def wrapped_text(text: str, line_width=25, max_lines=None):
 
 
 def sticker_from_image(jpg_path: Path):
-    img: Image = Image.open(jpg_path)
-    img = resize_to_sticker_limits(img)
-    img_path = jpg_path.with_suffix('.png')
-    img.save(img_path)
-    img.close()
+    with Image.open(jpg_path) as img:
+        img = resize_to_sticker_limits(img)
+        img_path = jpg_path.with_suffix('.png')
+        img.save(img_path)
     return img_path
 
 
