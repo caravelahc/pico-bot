@@ -1,6 +1,8 @@
+import textwrap
 from pathlib import Path
-from PIL import Image, ImageDraw, ImageFont
+
 from emoji import emoji_lis, emoji_count
+from PIL import Image, ImageDraw, ImageFont
 
 from .config import ROOT_DIR
 from .geometry import (
@@ -15,6 +17,8 @@ from .geometry import (
     BOX_RADIUS,
     FONT_SIZE,
     LINE_SPACE,
+    LINE_WIDTH_LIMIT,
+    MAX_NUMBER_OF_LINES,
     Point,
     Box,
 )
@@ -29,6 +33,18 @@ TITLE_COLOR = "#338cf3"
 TEXT_COLOR = "#dddddd"
 TIME_COLOR = "#6A7B8C"
 EMOJI_JOINER = chr(0xFE0F)
+
+FONTS = {
+    'bold': ImageFont.truetype(
+        font=str(FONT_DIR / 'OpenSans-Bold.ttf'), size=FONT_SIZE
+    ),
+    'normal': ImageFont.truetype(
+        font=str(FONT_DIR / 'OpenSans-SemiBold.ttf'), size=FONT_SIZE
+    ),
+    'time': ImageFont.truetype(font=str(FONT_DIR / 'OpenSans-Regular.ttf'), size=13),
+    'emoji': ImageFont.truetype(font=str(FONT_DIR / 'Symbola.ttf'), size=16),
+    'avatar': ImageFont.truetype(font=str(FONT_DIR / 'OpenSans-SemiBold.ttf'), size=20),
+}
 
 
 def draw_balloon(img_draw: ImageDraw.Draw, points: Box, fill=None, width=0):
@@ -69,28 +85,21 @@ def draw_balloon(img_draw: ImageDraw.Draw, points: Box, fill=None, width=0):
 def draw_username(
     txt_draw: ImageDraw.ImageDraw,
     position: Point,
-    username="Jojo",
+    username="Caravela",
     fill=TITLE_COLOR,
-    font=None,
 ):
     x0 = position.x + MSG_PADDING_H
     y0 = position.y + MSG_PADDING_V
-    txt_draw.text((x0, y0), username, font=font, fill=fill)
+    txt_draw.text((x0, y0), username, font=FONTS['bold'], fill=fill)
 
 
 def draw_message(
-    txt_draw: ImageDraw.ImageDraw,
-    points: Box,
-    text="Oi, eu sou o Jojo",
-    fill=TEXT_COLOR,
-    font=None,
-    user_size=[0, 0],
+    txt_draw: ImageDraw.ImageDraw, points: Box, text=' ', user_size=[0, 0],
 ):
     current_position = Point(
         points.top_left.x + MSG_PADDING_H,
         points.top_left.y + MSG_PADDING_V + user_size[1] + LINE_SPACE,
     )
-    symbola_font = ImageFont.truetype(font=str(FONT_DIR / 'Symbola.ttf'), size=16)
     emoji_locations = emoji_lis(text)
     indexes = [0]
 
@@ -103,29 +112,35 @@ def draw_message(
         txt_draw.text(
             (current_position.x, current_position.y + 4),
             text=em['emoji'],
-            font=symbola_font,
+            font=FONTS['emoji'],
             fill=TEXT_COLOR,
         )
         incr = 1
         if len(text) > em['location'] + 1 and text[em['location'] + 1] == EMOJI_JOINER:
             incr = 2
         indexes.append(em['location'] + incr)
-        current_position.x += txt_draw.textsize(current_text, font=symbola_font)[0]
+        current_position.x += txt_draw.textsize(current_text, font=FONTS['emoji'])[0]
 
     def draw_text(text: str):
         lines = text.split('\n')
+        y_displacement = txt_draw.textsize(' ', font=FONTS['normal'])[1] + LINE_SPACE
         for line in lines[:-1]:
             txt_draw.text(
-                current_position.to_tuple(), text=line, font=font, fill=TEXT_COLOR
+                current_position.to_tuple(),
+                text=line,
+                font=FONTS['normal'],
+                fill=TEXT_COLOR,
             )
-            textsize = txt_draw.textsize(' ', font=font)
             current_position.x = points.top_left.x + MSG_PADDING_H
-            current_position.y += textsize[1] + LINE_SPACE
+            current_position.y += y_displacement
         text = lines[-1]
         txt_draw.text(
-            current_position.to_tuple(), text=text, font=font, fill=TEXT_COLOR
+            current_position.to_tuple(),
+            text=text,
+            font=FONTS['normal'],
+            fill=TEXT_COLOR,
         )
-        displacement = txt_draw.textsize(text, font=font)
+        displacement = txt_draw.textsize(text, font=FONTS['normal'])
         current_position.x += displacement[0]
 
     for em in emoji_locations:
@@ -141,13 +156,11 @@ def draw_message(
         draw_text(current_text)
 
 
-def draw_time(
-    txt_draw: ImageDraw.ImageDraw, points: Box, text="04:20", fill=TEXT_COLOR, font=None
-):
-    tw = txt_draw.textsize(text, font=font)
+def draw_time(txt_draw: ImageDraw.ImageDraw, points: Box, text="04:20"):
+    tw = txt_draw.textsize(text, font=FONTS['time'])
     x0 = points.bottom_right.x - TIME_PADDING_H - tw[0]
     y0 = points.bottom_right.y - (TIME_PADDING_BOTTOM + tw[1])
-    txt_draw.text((x0, y0), text, font=font, fill=TIME_COLOR)
+    txt_draw.text((x0, y0), text, font=FONTS['time'], fill=TIME_COLOR)
 
 
 def draw_avatar(
@@ -164,12 +177,13 @@ def draw_avatar(
     size = AVATAR_SIZE + 4
     if avatar_path == '':
         draw.ellipse(points.to_list(), fill=TITLE_COLOR)
-        avatar_font = ImageFont.truetype(
-            font=str(FONT_DIR / 'OpenSans-SemiBold.ttf'), size=20
-        )
         avatar_center = points.center().to_tuple()
         draw.text(
-            avatar_center, username[0], anchor='mm', font=avatar_font, fill='#FFFFFF'
+            avatar_center,
+            username[0],
+            anchor='mm',
+            font=FONTS['avatar'],
+            fill='#FFFFFF',
         )
         return
 
@@ -196,34 +210,30 @@ def draw_avatar(
 def sticker_from_text(
     user_id: int, username: str, text: str, avatar_path: str, msg_time: str
 ):
+    '''
+    Creates an image from a text message, emulating Telegram's message layout/design.
+    '''
     size = (512, 256)
     transparent = (0, 0, 0, 0)
-
-    bold_font = ImageFont.truetype(
-        font=str(FONT_DIR / 'OpenSans-Bold.ttf'), size=FONT_SIZE
-    )
-    font = ImageFont.truetype(
-        font=str(FONT_DIR / 'OpenSans-SemiBold.ttf'), size=FONT_SIZE
-    )
-    time_font = ImageFont.truetype(font=str(FONT_DIR / 'OpenSans-Regular.ttf'), size=13)
 
     username = username if (len(username) < 26) else f'{username[0:25]}...'
     limit_is_user = len(username) >= len(text)
     aux_img = ImageDraw.Draw(Image.new('RGBA', size, transparent))
-    title_size = aux_img.textsize(username, font=bold_font)
-    text_size = aux_img.textsize(text, font=font)
+    title_size = aux_img.textsize(username, font=FONTS['bold'])
+    text_size = aux_img.textsize(text, font=FONTS['normal'])
     additional_space_for_emojis = 5 * emoji_count(text)
     text_size = (text_size[0] + additional_space_for_emojis, text_size[1])
-    time_size = aux_img.textsize('04:20', font=time_font)
+    time_size = aux_img.textsize('04:20', font=FONTS['time'])
     final_text = text
 
     if limit_is_user:
         bigger_size = title_size
     else:
-        if len(text) >= 26:
-            aux_text = wrapped_text(text, line_limit=26)
-            text_size = aux_img.multiline_textsize(aux_text, font=font)
-            final_text = aux_text
+        if len(text) >= LINE_WIDTH_LIMIT:
+            aux_text = wrapped_text(text, line_width=LINE_WIDTH_LIMIT)
+            final_text, text_size = try_better_aspect_ratio(
+                aux_img, original_text=text, modified_text=aux_text
+            )
         bigger_size = text_size
     box_size = (
         bigger_size[0] + 2 * MSG_PADDING_H,
@@ -252,46 +262,63 @@ def sticker_from_text(
 
     draw_balloon(dr, points=points_balloon, fill=BOX_COLOR)
 
-    draw_username(
-        dr, position=points_balloon.top_left, font=bold_font, username=username
-    )
-    draw_message(
-        dr, points=points_balloon, font=font, text=final_text, user_size=title_size
-    )
-    draw_time(dr, text=msg_time, points=points_balloon, font=time_font)
+    draw_username(dr, position=points_balloon.top_left, username=username)
+    draw_message(dr, points=points_balloon, text=final_text, user_size=title_size)
+    draw_time(dr, text=msg_time, points=points_balloon)
 
-    ratio = 512 / img_width
-    sample = Image.ANTIALIAS
-    img = img.resize((512, int(ratio * size[1])), resample=sample)
+    img = resize_to_sticker_limits(img)
     img_path = IMG_DIR / f'{IMG_PREFIX}{user_id}.png'
     img.save(img_path)
     img.close()
     return img_path
 
 
-def wrapped_text(text: str, line_limit=25):
-    words = text.split(' ')
-    lines = [words[0]]
-    for w in words[1:]:
-        if len(lines[-1]) + len(w) < line_limit:
-            lines[-1] += ' ' + w
+def wrapped_text(text: str, line_width=25, max_lines=None):
+    return '\n'.join(textwrap.wrap(text, width=line_width, max_lines=max_lines))
+
+
+def try_better_aspect_ratio(img: ImageDraw, original_text: str, modified_text: str):
+    '''
+    If the message text is too long, wrapping it in 25 character lines will result in an image with a big height and small width, making it difficult to read when resized to Telegram's limit of 512px.
+    So if the wrapped text has a height more than two times its width, we increase the line width limit and re-wrap it until we get an aspect ratio closer to 1:1.
+    '''
+    line_width = LINE_WIDTH_LIMIT
+    text_size = img.multiline_textsize(modified_text, font=FONTS['normal'])
+    for _ in range(3):
+        if text_size[1] > 2 * text_size[0]:
+            line_width *= 2
+            modified_text = wrapped_text(
+                original_text, line_width=line_width, max_lines=MAX_NUMBER_OF_LINES
+            )
+            text_size = img.multiline_textsize(modified_text, font=FONTS['normal'])
         else:
-            lines.append(w)
-    return '\n'.join(lines)
+            break
+    return modified_text, text_size
 
 
 def sticker_from_image(jpg_path: Path):
-    img: Image = Image.open(jpg_path)
+    '''
+    Converts the given image to a proper format that can be uploaded as a sticker.
+    Telegram accepts PNG images with a maximum size of 512x512 pixels.
+    '''
+    with Image.open(jpg_path) as img:
+        img = resize_to_sticker_limits(img)
+        img_path = jpg_path.with_suffix('.png')
+        img.save(img_path)
+    return img_path
+
+
+def resize_to_sticker_limits(img: Image):
+    '''
+    Resizes the image to fit Telegram restrictions (maximum size of 512x512 pixels), keeping its aspect ratio.
+    '''
     if img.width >= img.height:
         ratio = 512 / img.width
         img = img.resize((512, int(ratio * img.height)), resample=Image.ANTIALIAS)
     else:
         ratio = 512 / img.height
         img = img.resize((int(ratio * img.width), 512), resample=Image.ANTIALIAS)
-    img_path = jpg_path.with_suffix('.png')
-    img.save(img_path)
-    img.close()
-    return img_path
+    return img
 
 
 def generate_avatar_mask(img_size: tuple, points: Box):
