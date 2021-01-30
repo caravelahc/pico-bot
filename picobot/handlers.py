@@ -66,20 +66,14 @@ def create_pack(bot: Bot, update: Update):
     # Create Pack
     try:
         bot.create_new_sticker_set(
-            user_id=user.id,
-            name=name,
-            title=title,
-            png_sticker=png_sticker,
-            emojis=emoji,
+            user_id=user.id, name=name, title=title, png_sticker=png_sticker, emojis=emoji,
         )
         sticker = bot.get_sticker_set(name).stickers[0]
         update.message.reply_sticker(sticker)
         repository().add_pack_to_user(user, name)
     except Exception as exc:
-        logger.error("Exception on Create Pack. User %s (id %d) Pack %s",
-            user.first_name,
-            user.id,
-            name,
+        logger.error(
+            "Exception on Create Pack. User %s (id %d) Pack %s", user.first_name, user.id, name,
         )
 
         logger.error(exc)
@@ -175,10 +169,7 @@ def add_text(bot: Bot, msg: Message, user_id: int, pack_name: str, emoji: str):
         msg.reply_sticker(sticker)
     except Exception as exc:
         logger.error(
-            "Exception on add_text. User %s (id %d) Pack %s",
-            username,
-            user_id,
-            pack_name,
+            "Exception on add_text. User %s (id %d) Pack %s", username, user_id, pack_name,
         )
         logger.error(exc)
         return False
@@ -201,9 +192,7 @@ def caption_handler(bot: Bot, update: Update):
         add_sticker(bot, update)
 
 
-def add_photo(
-    bot: Bot, msg: Message, user_id: int, pack_name: str, emoji: str, replied: bool
-):
+def add_photo(bot: Bot, msg: Message, user_id: int, pack_name: str, emoji: str, replied: bool):
     if replied:
         photo = msg.reply_to_message.photo[-1]
     else:
@@ -224,9 +213,7 @@ def add_photo(
     return True
 
 
-def add_document(
-    bot: Bot, msg: Message, user_id: int, pack_name: str, emoji: str, replied: bool
-):
+def add_document(bot: Bot, msg: Message, user_id: int, pack_name: str, emoji: str, replied: bool):
     if replied:
         doc = msg.reply_to_message.document
     else:
@@ -244,9 +231,7 @@ def add_document(
     return True
 
 
-def insert_sticker_in_pack(
-    bot: Bot, msg: Message, user_id: int, pack_name: str, emoji: str
-):
+def insert_sticker_in_pack(bot: Bot, msg: Message, user_id: int, pack_name: str, emoji: str):
     sticker_id = msg.reply_to_message.sticker.file_id
 
     img_path = IMG_DIR / f'{IMG_PREFIX}{user_id}.jpg'
@@ -262,9 +247,8 @@ def insert_sticker_in_pack(
             sticker = bot.get_sticker_set(pack_name).stickers[-1]
             msg.reply_sticker(sticker)
     except Exception as exc:
-        logger.error("Exception inserting sticker in pack. User id %d Pack %s",
-            user_id,
-            pack_name,
+        logger.error(
+            "Exception inserting sticker in pack. User id %d Pack %s", user_id, pack_name,
         )
 
         logger.error(exc)

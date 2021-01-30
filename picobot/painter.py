@@ -35,12 +35,8 @@ TIME_COLOR = "#6A7B8C"
 EMOJI_JOINER = chr(0xFE0F)
 
 FONTS = {
-    'bold': ImageFont.truetype(
-        font=str(FONT_DIR / 'OpenSans-Bold.ttf'), size=FONT_SIZE
-    ),
-    'normal': ImageFont.truetype(
-        font=str(FONT_DIR / 'OpenSans-SemiBold.ttf'), size=FONT_SIZE
-    ),
+    'bold': ImageFont.truetype(font=str(FONT_DIR / 'OpenSans-Bold.ttf'), size=FONT_SIZE),
+    'normal': ImageFont.truetype(font=str(FONT_DIR / 'OpenSans-SemiBold.ttf'), size=FONT_SIZE),
     'time': ImageFont.truetype(font=str(FONT_DIR / 'OpenSans-Regular.ttf'), size=13),
     'emoji': ImageFont.truetype(font=str(FONT_DIR / 'Symbola.ttf'), size=16),
     'avatar': ImageFont.truetype(font=str(FONT_DIR / 'OpenSans-SemiBold.ttf'), size=20),
@@ -83,10 +79,7 @@ def draw_balloon(img_draw: ImageDraw.Draw, points: Box, fill=None, width=0):
 
 
 def draw_username(
-    txt_draw: ImageDraw.ImageDraw,
-    position: Point,
-    username="Caravela",
-    fill=TITLE_COLOR,
+    txt_draw: ImageDraw.ImageDraw, position: Point, username="Caravela", fill=TITLE_COLOR,
 ):
     x0 = position.x + MSG_PADDING_H
     y0 = position.y + MSG_PADDING_V
@@ -126,19 +119,13 @@ def draw_message(
         y_displacement = txt_draw.textsize(' ', font=FONTS['normal'])[1] + LINE_SPACE
         for line in lines[:-1]:
             txt_draw.text(
-                current_position.to_tuple(),
-                text=line,
-                font=FONTS['normal'],
-                fill=TEXT_COLOR,
+                current_position.to_tuple(), text=line, font=FONTS['normal'], fill=TEXT_COLOR,
             )
             current_position.x = points.top_left.x + MSG_PADDING_H
             current_position.y += y_displacement
         text = lines[-1]
         txt_draw.text(
-            current_position.to_tuple(),
-            text=text,
-            font=FONTS['normal'],
-            fill=TEXT_COLOR,
+            current_position.to_tuple(), text=text, font=FONTS['normal'], fill=TEXT_COLOR,
         )
         displacement = txt_draw.textsize(text, font=FONTS['normal'])
         current_position.x += displacement[0]
@@ -164,11 +151,7 @@ def draw_time(txt_draw: ImageDraw.ImageDraw, points: Box, text="04:20"):
 
 
 def draw_avatar(
-    img: Image,
-    draw: ImageDraw.ImageDraw,
-    username: str,
-    points_balloon: Box,
-    avatar_path: str,
+    img: Image, draw: ImageDraw.ImageDraw, username: str, points_balloon: Box, avatar_path: str,
 ):
     y0 = points_balloon.bottom_right.y - AVATAR_SIZE
     y1 = points_balloon.bottom_right.y
@@ -179,11 +162,7 @@ def draw_avatar(
         draw.ellipse(points.to_list(), fill=TITLE_COLOR)
         avatar_center = points.center().to_tuple()
         draw.text(
-            avatar_center,
-            username[0],
-            anchor='mm',
-            font=FONTS['avatar'],
-            fill='#FFFFFF',
+            avatar_center, username[0], anchor='mm', font=FONTS['avatar'], fill='#FFFFFF',
         )
         return
 
@@ -192,14 +171,10 @@ def draw_avatar(
         avatar = avatar.resize((size, size), resample=Image.ANTIALIAS)
     elif avatar.width > avatar.height:
         ratio = size / avatar.width
-        avatar = avatar.resize(
-            (size, int(ratio * avatar.height)), resample=Image.ANTIALIAS
-        )
+        avatar = avatar.resize((size, int(ratio * avatar.height)), resample=Image.ANTIALIAS)
     else:
         ratio = size / avatar.height
-        avatar = avatar.resize(
-            (int(ratio * avatar.width), size), resample=Image.ANTIALIAS
-        )
+        avatar = avatar.resize((int(ratio * avatar.width), size), resample=Image.ANTIALIAS)
 
     avatar_mask = generate_avatar_mask(img.size, points)
     tmp = Image.new('RGBA', img.size)
@@ -207,9 +182,7 @@ def draw_avatar(
     img.paste(tmp, mask=avatar_mask)
 
 
-def sticker_from_text(
-    user_id: int, username: str, text: str, avatar_path: str, msg_time: str
-):
+def sticker_from_text(user_id: int, username: str, text: str, avatar_path: str, msg_time: str):
     '''
     Creates an image from a text message, emulating Telegram's message layout/design.
     '''
@@ -237,11 +210,7 @@ def sticker_from_text(
         bigger_size = text_size
     box_size = (
         bigger_size[0] + 2 * MSG_PADDING_H,
-        title_size[1]
-        + bigger_size[1]
-        + 2 * MSG_PADDING_V
-        + time_size[1]
-        + 2 * LINE_SPACE,
+        title_size[1] + bigger_size[1] + 2 * MSG_PADDING_V + time_size[1] + 2 * LINE_SPACE,
     )
 
     b_width = max(BOX_MIN_WIDTH, box_size[0])
@@ -256,9 +225,7 @@ def sticker_from_text(
 
     img = Image.new("RGBA", size, transparent)
     dr = ImageDraw.Draw(img)
-    draw_avatar(
-        img, dr, username, points_balloon=points_balloon, avatar_path=avatar_path
-    )
+    draw_avatar(img, dr, username, points_balloon=points_balloon, avatar_path=avatar_path)
 
     draw_balloon(dr, points=points_balloon, fill=BOX_COLOR)
 
