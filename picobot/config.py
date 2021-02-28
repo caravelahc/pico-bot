@@ -9,11 +9,8 @@ try:
 except KeyError:
     CONFIG_DIR = Path.home() / '.config' / 'picobot'
 
-try:
-    with open(CONFIG_DIR / 'config.json') as f:
-        config = json.load(f)
-except FileNotFoundError:
-    config = {}
+with open(CONFIG_DIR / 'config.json') as f:
+    config = json.load(f)
 
 TOKEN = config['token']
 DB_PATH = config.get('db_path', CONFIG_DIR / 'bot.db')
