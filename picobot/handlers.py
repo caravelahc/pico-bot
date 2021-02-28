@@ -5,6 +5,7 @@ from functools import wraps
 
 from slugify import slugify
 from telegram import Bot, Message, Update
+import telegram
 
 from picobot import responses
 
@@ -160,26 +161,30 @@ def add_text(bot: Bot, msg: Message, user_id: int, pack_name: str, emoji: str):
     text = msg.reply_to_message.text
     # save as png
     img_path = sticker_from_text(user_id, username, text, avatar_path, msg_time)
-    png_sticker = open(img_path, 'rb')
     try:
-        bot.add_sticker_to_set(
-            user_id=user_id, name=pack_name, png_sticker=png_sticker, emojis=emoji
-        )
-        sticker = bot.get_sticker_set(pack_name).stickers[-1]
-        msg.reply_sticker(sticker)
+        with open(img_path, 'rb') as png_sticker:
+            bot.add_sticker_to_set(
+                user_id=user_id, name=pack_name, png_sticker=png_sticker, emojis=emoji
+            )
+            sticker = bot.get_sticker_set(pack_name).stickers[-1]
+            msg.reply_sticker(sticker)
     except Exception as exc:
+        if isinstance(exc, telegram.error.BadRequest):
+            exception_msg = exc.message.lower()
+            if exception_msg in responses.TELEGRAM_ERROR_CODES:
+                msg.reply_text(responses.TELEGRAM_ERROR_CODES[exception_msg])
+                return True
         logger.error(
             "Exception on add_text. User %s (id %d) Pack %s", username, user_id, pack_name,
         )
         logger.error(exc)
         return False
     finally:
-        png_sticker.close()
+        if os.path.exists(img_path):
+            os.remove(img_path)
+        if os.path.exists(avatar_path):
+            os.remove(avatar_path)
 
-    if os.path.exists(img_path):
-        os.remove(img_path)
-    if os.path.exists(avatar_path):
-        os.remove(avatar_path)
     return True
 
 
@@ -202,14 +207,24 @@ def add_photo(bot: Bot, msg: Message, user_id: int, pack_name: str, emoji: str, 
         bot.get_file(photo.file_id).download(custom_path=img_path)
         # resize and save as png
         img_path = sticker_from_image(img_path)
-        with open(str(img_path), 'rb') as png_sticker:
+        with open(img_path, 'rb') as png_sticker:
             bot.add_sticker_to_set(
                 user_id=user_id, name=pack_name, png_sticker=png_sticker, emojis=emoji
             )
             sticker = bot.get_sticker_set(pack_name).stickers[-1]
             msg.reply_sticker(sticker)
-    except Exception as e:
+    except Exception as exc:
+        if isinstance(exc, telegram.error.BadRequest):
+            exception_msg = exc.message.lower()
+            if exception_msg in responses.TELEGRAM_ERROR_CODES:
+                msg.reply_text(responses.TELEGRAM_ERROR_CODES[exception_msg])
+                return True
+        logger.error(
+            "Exception on add_photo. User id %d Pack %s", user_id, pack_name,
+        )
+        logger.error(exc)
         return False
+
     return True
 
 
@@ -225,6 +240,10 @@ def add_document(bot: Bot, msg: Message, user_id: int, pack_name: str, emoji: st
         )
         sticker = bot.get_sticker_set(pack_name).stickers[-1]
         msg.reply_sticker(sticker)
+    except telegram.error.BadRequest as exc:
+        exception_msg = exc.message.lower()
+        if exception_msg in responses.TELEGRAM_ERROR_CODES:
+            msg.reply_text(responses.TELEGRAM_ERROR_CODES[exception_msg])
     except Exception:
         msg.reply_text(responses.INVALID_DOC)
         return False
@@ -247,10 +266,14 @@ def insert_sticker_in_pack(bot: Bot, msg: Message, user_id: int, pack_name: str,
             sticker = bot.get_sticker_set(pack_name).stickers[-1]
             msg.reply_sticker(sticker)
     except Exception as exc:
+        if isinstance(exc, telegram.error.BadRequest):
+            exception_msg = exc.message.lower()
+            if exception_msg in responses.TELEGRAM_ERROR_CODES:
+                msg.reply_text(responses.TELEGRAM_ERROR_CODES[exception_msg])
+                return True
         logger.error(
             "Exception inserting sticker in pack. User id %d Pack %s", user_id, pack_name,
         )
-
         logger.error(exc)
         return False
     return True
