@@ -1,7 +1,7 @@
 ERROR_MSG = "Algo deu errado. Utilize o comando /help."
 
 TELEGRAM_ERROR_CODES = {
-    'Stickerpack_stickers_too_much': 'Este pack atingiu o tamanho limite permitido pelo Telegram.\nCrie um novo pack.',
+    'stickerpack_stickers_too_much': 'Este pack atingiu o tamanho limite permitido pelo Telegram.\nCrie um novo pack.',
     'stickers_too_much': 'Este pack atingiu o tamanho limite permitido pelo Telegram.\nCrie um novo pack.',
 }
 
