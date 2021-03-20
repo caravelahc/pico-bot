@@ -2,8 +2,8 @@ from telegram.ext import CommandHandler, Filters, MessageHandler, Updater
 
 from picobot import handlers
 
-from .config import DB_PATH, TOKEN
-from .repository.repo import repository
+from picobot.config import DB_PATH, TOKEN
+from picobot.repository.repo import repository
 
 
 def main():
