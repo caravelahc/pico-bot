@@ -1,4 +1,5 @@
 import textwrap
+import random
 from pathlib import Path
 
 from emoji import emoji_lis, emoji_count
@@ -32,6 +33,7 @@ BOX_COLOR = "#182533"
 TITLE_COLOR = "#338cf3"
 TEXT_COLOR = "#dddddd"
 TIME_COLOR = "#6A7B8C"
+FOREGROUND_COLORS = ["#1D9BF9","#FFCC00","#F91880","#7856FF","#FF7A00","#00BA7C"]
 EMOJI_JOINER = chr(0xFE0F)
 
 FONTS = {
@@ -159,7 +161,8 @@ def draw_avatar(
     box_position = tuple(a - 2 for a in points.top_left.to_tuple())
     size = AVATAR_SIZE + 4
     if avatar_path == '':
-        draw.ellipse(points.to_list(), fill=TITLE_COLOR)
+        avatar_color = random.choice(FOREGROUND_COLORS)
+        draw.ellipse(points.to_list(), fill=avatar_color)
         avatar_center = points.center().to_tuple()
         draw.text(
             avatar_center, username[0], anchor='mm', font=FONTS['avatar'], fill='#FFFFFF',
@@ -229,7 +232,8 @@ def sticker_from_text(user_id: int, username: str, text: str, avatar_path: str, 
 
     draw_balloon(dr, points=points_balloon, fill=BOX_COLOR)
 
-    draw_username(dr, position=points_balloon.top_left, username=username)
+    username_color = random.choice(FOREGROUND_COLORS)
+    draw_username(dr, position=points_balloon.top_left, username=username, fill=username_color)
     draw_message(dr, points=points_balloon, text=final_text, user_size=title_size)
     draw_time(dr, text=msg_time, points=points_balloon)
 
