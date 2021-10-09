@@ -1,5 +1,4 @@
 import textwrap
-import random
 from pathlib import Path
 
 from emoji import emoji_lis, emoji_count
@@ -153,7 +152,7 @@ def draw_time(txt_draw: ImageDraw.ImageDraw, points: Box, text="04:20"):
 
 
 def draw_avatar(
-    img: Image, draw: ImageDraw.ImageDraw, username: str, points_balloon: Box, avatar_path: str,
+    img: Image, draw: ImageDraw.ImageDraw, username: str, points_balloon: Box, avatar_path: str, user_id: int
 ):
     y0 = points_balloon.bottom_right.y - AVATAR_SIZE
     y1 = points_balloon.bottom_right.y
@@ -161,7 +160,7 @@ def draw_avatar(
     box_position = tuple(a - 2 for a in points.top_left.to_tuple())
     size = AVATAR_SIZE + 4
     if avatar_path == '':
-        avatar_color = random.choice(FOREGROUND_COLORS)
+        avatar_color = FOREGROUND_COLORS[user_id % len(FOREGROUND_COLORS)]
         draw.ellipse(points.to_list(), fill=avatar_color)
         avatar_center = points.center().to_tuple()
         draw.text(
@@ -228,11 +227,11 @@ def sticker_from_text(user_id: int, username: str, text: str, avatar_path: str, 
 
     img = Image.new("RGBA", size, transparent)
     dr = ImageDraw.Draw(img)
-    draw_avatar(img, dr, username, points_balloon=points_balloon, avatar_path=avatar_path)
+    draw_avatar(img, dr, username, points_balloon=points_balloon, avatar_path=avatar_path, user_id=user_id)
 
     draw_balloon(dr, points=points_balloon, fill=BOX_COLOR)
 
-    username_color = random.choice(FOREGROUND_COLORS)
+    username_color = FOREGROUND_COLORS[user_id % len(FOREGROUND_COLORS)]
     draw_username(dr, position=points_balloon.top_left, username=username, fill=username_color)
     draw_message(dr, points=points_balloon, text=final_text, user_size=title_size)
     draw_time(dr, text=msg_time, points=points_balloon)
