@@ -160,7 +160,7 @@ def add_text(bot: Bot, msg: Message, user_id: int, pack_name: str, emoji: str):
 
     text = msg.reply_to_message.text
     # save as png
-    img_path = sticker_from_text(user_id, username, text, avatar_path, msg_time)
+    img_path = sticker_from_text(user_id, username, text, avatar_path, msg_time, other_user_id)
     try:
         with open(img_path, 'rb') as png_sticker:
             bot.add_sticker_to_set(
