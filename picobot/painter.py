@@ -152,7 +152,7 @@ def draw_time(txt_draw: ImageDraw.ImageDraw, points: Box, text="04:20"):
 
 
 def draw_avatar(
-    img: Image, draw: ImageDraw.ImageDraw, username: str, points_balloon: Box, avatar_path: str, user_id: int
+    img: Image, draw: ImageDraw.ImageDraw, username: str, points_balloon: Box, avatar_path: str, background_color: str
 ):
     y0 = points_balloon.bottom_right.y - AVATAR_SIZE
     y1 = points_balloon.bottom_right.y
@@ -160,8 +160,7 @@ def draw_avatar(
     box_position = tuple(a - 2 for a in points.top_left.to_tuple())
     size = AVATAR_SIZE + 4
     if avatar_path == '':
-        avatar_color = FOREGROUND_COLORS[user_id % len(FOREGROUND_COLORS)]
-        draw.ellipse(points.to_list(), fill=avatar_color)
+        draw.ellipse(points.to_list(), fill=background_color)
         avatar_center = points.center().to_tuple()
         draw.text(
             avatar_center, username[0], anchor='mm', font=FONTS['avatar'], fill='#FFFFFF',
@@ -184,7 +183,7 @@ def draw_avatar(
     img.paste(tmp, mask=avatar_mask)
 
 
-def sticker_from_text(user_id: int, username: str, text: str, avatar_path: str, msg_time: str):
+def sticker_from_text(user_id: int, username: str, text: str, avatar_path: str, msg_time: str, other_user_id: int):
     '''
     Creates an image from a text message, emulating Telegram's message layout/design.
     '''
@@ -227,12 +226,12 @@ def sticker_from_text(user_id: int, username: str, text: str, avatar_path: str, 
 
     img = Image.new("RGBA", size, transparent)
     dr = ImageDraw.Draw(img)
-    draw_avatar(img, dr, username, points_balloon=points_balloon, avatar_path=avatar_path, user_id=user_id)
+    user_color = get_user_color(other_user_id)
+    draw_avatar(img, dr, username, points_balloon=points_balloon, avatar_path=avatar_path, background_color=user_color)
 
     draw_balloon(dr, points=points_balloon, fill=BOX_COLOR)
 
-    username_color = FOREGROUND_COLORS[user_id % len(FOREGROUND_COLORS)]
-    draw_username(dr, position=points_balloon.top_left, username=username, fill=username_color)
+    draw_username(dr, position=points_balloon.top_left, username=username, fill=user_color)
     draw_message(dr, points=points_balloon, text=final_text, user_size=title_size)
     draw_time(dr, text=msg_time, points=points_balloon)
 
@@ -297,3 +296,7 @@ def generate_avatar_mask(img_size: tuple, points: Box):
     maskdraw.ellipse(points.to_list(), fill='#FFFFFF')
     del maskdraw
     return img
+
+
+def get_user_color(user_id: int) -> str:
+    return FOREGROUND_COLORS[user_id % len(FOREGROUND_COLORS)]
