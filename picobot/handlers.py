@@ -311,6 +311,55 @@ def del_sticker(bot: Bot, update: Update):
         msg.reply_text(responses.REMOVE_STICKER_HELP)
 
 
+def change_emojis(bot: Bot, update: Update):
+    msg: Message = update.message
+    msg_type = get_msg_type(msg)
+    user_id = msg.from_user.id
+    response = responses.ERROR_MSG
+    splittext = shlex.split(msg.text)
+
+    # remove sticker from pack
+    try:
+        if msg_type == MsgType.REP_STICKER:
+            pack_name = msg.reply_to_message.sticker.set_name
+            sticker_id = msg.reply_to_message.sticker.file_id
+
+            if pack_name is None:
+                msg.reply_text('Não é possível remover o sticker de um pack inexistente.')
+                return
+
+        if not repository().check_permission(user_id, pack_name):
+            msg.reply_text(responses.NO_PERMISSION)
+            return
+
+        bot.delete_sticker_from_set(sticker_id)
+        # add_sticker(bot, update)
+        msg = update.message
+
+    except Exception as exc:
+        msg.reply_text("Changing Emojis: Falhou")
+        logger.error(
+            "Exception changing emojis for sticker in pack. User id %d Pack %s", user_id, pack_name,
+        )
+        logger.error(exc)
+
+    # get emojis
+    if len(splittext) > 1:
+        emoji = splittext[1]
+    else:
+        emoji = DEFAULT_EMOJI
+
+    if msg_type not in [MsgType.STICKER, MsgType.REP_STICKER]:
+        update.message.reply_text("Message is not a reply to a sticker.")
+        return
+
+    if insert_sticker_in_pack(bot, msg, user_id, pack_name, emoji):
+        return
+
+    # check for errors
+    update.message.reply_text(response)
+
+
 def set_default_pack(bot: Bot, update: Update):
     msg: Message = update.message
     user_id = msg.from_user.id
