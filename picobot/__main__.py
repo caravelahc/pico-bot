@@ -23,6 +23,7 @@ def main():
     dp.add_handler(CommandHandler('setdefaultpack', handlers.set_default_pack))
     dp.add_handler(CommandHandler('setpublic', handlers.handler_pack_public))
     dp.add_handler(CommandHandler('setprivate', handlers.handler_pack_private))
+    dp.add_handler(CommandHandler('change_emojis',handlers.change_emojis))
     media_filter = (Filters.photo | Filters.document) & (~Filters.reply)
     dp.add_handler(MessageHandler(filters=media_filter, callback=handlers.caption_handler))
 
