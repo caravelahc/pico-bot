@@ -30,7 +30,7 @@ class Repo(object):
 
     def add_pack_to_user(self, user, pack_name: str):
         if user.id not in self._users:
-            self._users[user.id] = UserEntity(user)
+            self._users[user.id] = UserEntity(user.to_dict())
 
         self._users[user.id].packs.add(pack_name)
         self._update_db()

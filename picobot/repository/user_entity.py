@@ -1,9 +1,10 @@
-from telegram import User
+from dataclasses import dataclass, field
+from typing import Optional, Union
 
 
+@dataclass
 class UserEntity:
-    def __init__(self, t_user: User):
-        self.t_user = t_user
-        self.state = ''
-        self.packs = set()
-        self.def_pack = None
+    t_user: dict[str, Union[str, int, bool]]
+    state: str = field(default_factory=str)
+    packs: set[str] = field(default_factory=set[str])
+    def_pack: Optional[str] = None
