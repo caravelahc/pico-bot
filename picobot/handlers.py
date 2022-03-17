@@ -5,6 +5,7 @@ from functools import wraps
 
 from slugify import slugify
 from telegram import Bot, Message, Update
+from telegram.ext import CallbackContext
 import telegram
 
 from picobot import responses
@@ -45,12 +46,13 @@ def build_pack_name(title: str, bot: Bot) -> str:
     return f'{slug}_by_{bot.username}'
 
 
-def start(bot, update):
+def start(update: Update, context: CallbackContext):
     """Send a message when the command /start is issued."""
     update.message.reply_text(responses.GREETING)
 
 
-def create_pack(bot: Bot, update: Update):
+def create_pack(update: Update, context: CallbackContext):
+    bot = context.bot
     user = update.message.from_user
 
     if not check_msg_format(update.message.text):
@@ -82,7 +84,8 @@ def create_pack(bot: Bot, update: Update):
     png_sticker.close()
 
 
-def add_sticker(bot: Bot, update: Update):
+def add_sticker(update: Update, context: CallbackContext):
+    bot = context.bot
     msg = update.message
 
     msg_type = get_msg_type(msg)
@@ -188,13 +191,13 @@ def add_text(bot: Bot, msg: Message, user_id: int, pack_name: str, emoji: str):
     return True
 
 
-def caption_handler(bot: Bot, update: Update):
+def caption_handler(update: Update, context: CallbackContext):
     text = update.message.caption
     if text is None or text == '':
         return
     if text.split()[0] == '/addsticker':
         update.message.text = text
-        add_sticker(bot, update)
+        add_sticker(context.bot, update)
 
 
 def add_photo(bot: Bot, msg: Message, user_id: int, pack_name: str, emoji: str, replied: bool):
@@ -279,7 +282,8 @@ def insert_sticker_in_pack(bot: Bot, msg: Message, user_id: int, pack_name: str,
     return True
 
 
-def del_sticker(bot: Bot, update: Update):
+def del_sticker(update: Update, context: CallbackContext):
+    bot = context.bot
     msg: Message = update.message
     msg_type = get_msg_type(msg)
     user_id = msg.from_user.id
@@ -311,7 +315,8 @@ def del_sticker(bot: Bot, update: Update):
         msg.reply_text(responses.REMOVE_STICKER_HELP)
 
 
-def set_default_pack(bot: Bot, update: Update):
+def set_default_pack(update: Update, context: CallbackContext):
+    bot = context.bot
     msg: Message = update.message
     user_id = msg.from_user.id
 
@@ -330,22 +335,22 @@ def set_default_pack(bot: Bot, update: Update):
         update.message.reply_text(responses.INVALID_MSG)
 
 
-def handler_pack_public(bot: Bot, update: Update):
-    _set_pack_public(bot, update, True)
+def handler_pack_public(update: Update, context: CallbackContext):
+    _set_pack_public(update, context, True)
 
 
-def handler_pack_private(bot: Bot, update: Update):
-    _set_pack_public(bot, update, False)
+def handler_pack_private(update: Update, context: CallbackContext):
+    _set_pack_public(update, context, False)
 
 
-def _set_pack_public(bot: Bot, update: Update, is_public: bool):
+def _set_pack_public(update: Update, context: CallbackContext, is_public: bool):
     msg: Message = update.message
     user_id = msg.from_user.id
 
     if check_msg_format(msg.text):
         splittext = shlex.split(msg.text)
         title = splittext[1]
-        pack_name = build_pack_name(title, bot)
+        pack_name = build_pack_name(title, context.bot)
 
         # check if user is pack's owner
         if repository().check_permission(user_id, pack_name):
@@ -359,7 +364,7 @@ def _set_pack_public(bot: Bot, update: Update, is_public: bool):
 
 
 @creator_only
-def add_pack_to_user(bot: Bot, update: Update):
+def add_pack_to_user(update: Update, context: CallbackContext):
     msg: Message = update.message
     try:
         user = msg.reply_to_message.forward_from
@@ -369,7 +374,7 @@ def add_pack_to_user(bot: Bot, update: Update):
         if check_msg_format(msg.text):
             splittext = shlex.split(msg.text)
             title = splittext[1]
-            pack_name = build_pack_name(title, bot)
+            pack_name = build_pack_name(title, context.bot)
 
             repository().add_pack_to_user(user, pack_name)
         else:
@@ -403,11 +408,11 @@ def get_msg_type(message: Message):
         return msg_type
 
 
-def handler_help(bot, update):
+def handler_help(update: Update, context: CallbackContext):
     """Send a message when the command /help is issued."""
     update.message.reply_text(responses.HELP_MSG)
 
 
-def error(bot, update, error):
+def error(update: Update, context: CallbackContext):
     """Log Errors caused by Updates."""
-    logger.warning('Update "%s" caused error "%s"', update, error)
+    logger.warning('Update "%s" caused error "%s"', update, context.error)
