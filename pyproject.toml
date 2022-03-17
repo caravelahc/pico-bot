@@ -6,11 +6,12 @@ authors = ["Arthur Mesquita Pickcius <arthur.pickcius@gmail.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.7"
-python-telegram-bot = "^11.1"
+python-telegram-bot = "^13.11"
 dataset = "^1.1"
 pillow = "^8.0"
 python-slugify = "^4.0"
 emoji = "^0.6.0"
+typed-ast = "^1.5.2"
 
 [tool.poetry.dev-dependencies]
 pytest = "^3.0"
