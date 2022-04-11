@@ -374,6 +374,14 @@ passport = ["cryptography (!=3.4,!=3.4.1,!=3.4.2,!=3.4.3)"]
 socks = ["pysocks"]
 
 [[package]]
+name = "pythonvideoconverter"
+version = "1.0.3"
+description = "Video Converter library"
+category = "main"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "pytz"
 version = "2021.3"
 description = "World timezone definitions, modern and historical"
@@ -737,6 +745,9 @@ python-slugify = [
 python-telegram-bot = [
     {file = "python-telegram-bot-13.11.tar.gz", hash = "sha256:baeff704baa2ac3dc17a944c02da888228ad258e89be2e5bcbd13a8a5102d573"},
     {file = "python_telegram_bot-13.11-py3-none-any.whl", hash = "sha256:534f5bb0ff4ca34c9252e97e0b3bcdab81d97be0eb4821682a361cb426c00e55"},
+]
+pythonvideoconverter = [
+    {file = "PythonVideoConverter-1.0.3.tar.gz", hash = "sha256:d725feb77d7e42cbdd90bf3800111c1b98a32bb1b3e51283eead0f82b2320c59"},
 ]
 pytz = [
     {file = "pytz-2021.3-py2.py3-none-any.whl", hash = "sha256:3672058bc3453457b622aab7a1c3bfd5ab0bdae451512f6cf25f64ed37f5b87c"},

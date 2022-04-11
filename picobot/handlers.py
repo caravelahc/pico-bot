@@ -16,6 +16,7 @@ from .painter import sticker_from_image, sticker_from_text
 from .repository.repo import repository
 
 IMG_DIR = ROOT_DIR / 'images'
+VID_DIR = ROOT_DIR / 'videos'
 IMG_PREFIX = 'img'
 AVATAR_PREFIX = 'avatar'
 
@@ -82,6 +83,38 @@ def create_pack(update: Update, context: CallbackContext):
         logger.error(exc)
         update.message.reply_text(responses.ERROR_MSG)
     png_sticker.close()
+
+
+def create_video_pack(update: Update, context: CallbackContext):
+    bot = context.bot
+    user = update.message.from_user
+
+    if not check_msg_format(update.message.text):
+        update.message.reply_text(responses.INVALID_MSG)
+        return
+
+    splittext = shlex.split(update.message.text)
+
+    title = splittext[1]
+    name = build_pack_name(title, bot)
+    with open(VID_DIR / 'caravela.webm', 'rb') as webm_sticker:
+        emoji = splittext[2] if len(splittext) > 2 else DEFAULT_EMOJI
+
+        # Create Video Pack
+        try:
+            bot.create_new_sticker_set(
+                user_id=user.id, name=name, title=title, webm_sticker=webm_sticker, emojis=emoji,
+            )
+            sticker = bot.get_sticker_set(name).stickers[0]
+            update.message.reply_sticker(sticker)
+            repository().add_pack_to_user(user, name)
+        except Exception as exc:
+            logger.error(
+                "Exception on Create Pack. User %s (id %d) Pack %s", user.first_name, user.id, name,
+            )
+
+            logger.error(exc)
+            update.message.reply_text(responses.ERROR_MSG)
 
 
 def add_sticker(update: Update, context: CallbackContext):
