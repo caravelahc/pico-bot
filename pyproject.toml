@@ -12,6 +12,7 @@ pillow = "^9.0"
 python-slugify = "^4.0"
 emoji = "^0.6.0"
 typed-ast = "^1.5.2"
+PythonVideoConverter = "^1.0.3"
 
 [tool.poetry.dev-dependencies]
 pytest = "^3.0"
