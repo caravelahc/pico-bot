@@ -13,11 +13,13 @@ from picobot import responses
 from .config import CREATOR_ID, ROOT_DIR
 from .msg_type import MsgType
 from .painter import sticker_from_image, sticker_from_text
+from .video_editor import sticker_from_video
 from .repository.repo import repository
 
 IMG_DIR = ROOT_DIR / 'images'
 VID_DIR = ROOT_DIR / 'videos'
 IMG_PREFIX = 'img'
+VIDEO_PREFIX = 'vid'
 AVATAR_PREFIX = 'avatar'
 
 logging.basicConfig(
@@ -159,6 +161,12 @@ def add_sticker(update: Update, context: CallbackContext):
     elif msg_type == MsgType.REP_PHOTO:
         if add_photo(bot, msg, user_id, pack_name, emoji, True):
             return
+    elif msg_type == MsgType.VIDEO:
+        if add_video(bot, msg, user_id, pack_name, emoji, False):
+            return
+    elif msg_type == MsgType.REP_VIDEO:
+        if add_video(bot, msg, user_id, pack_name, emoji, True):
+            return
     elif msg_type == MsgType.DOCUMENT:
         if add_document(bot, msg, user_id, pack_name, emoji, False):
             return
@@ -257,6 +265,40 @@ def add_photo(bot: Bot, msg: Message, user_id: int, pack_name: str, emoji: str, 
                 return True
         logger.error(
             "Exception on add_photo. User id %d Pack %s", user_id, pack_name,
+        )
+        logger.error(exc)
+        return False
+
+    return True
+
+
+def add_video(bot: Bot, msg: Message, user_id: int, pack_name: str, emoji: str, replied: bool):
+    if replied:
+        msg.reply_to_message
+        video = msg.reply_to_message.video
+    else:
+        video = msg.video[-1]
+    video_path = VID_DIR / f'{VIDEO_PREFIX}{user_id}.mp4'
+    try:
+        if bot.get_file(video.file_id).file_size > 2172859:
+            raise Exception("File size exceeds limits")
+        bot.get_file(video.file_id).download(custom_path=video_path)
+        # resize and save as webm
+        video_path = sticker_from_video(video_path)
+        with open(video_path, 'rb') as webm_sticker:
+            bot.add_sticker_to_set(
+                user_id=user_id, name=pack_name, webm_sticker=webm_sticker, emojis=emoji
+            )
+            sticker = bot.get_sticker_set(pack_name).stickers[-1]
+            msg.reply_sticker(sticker)
+    except Exception as exc:
+        if isinstance(exc, telegram.error.BadRequest):
+            exception_msg = exc.message.lower()
+            if exception_msg in responses.TELEGRAM_ERROR_CODES:
+                msg.reply_text(responses.TELEGRAM_ERROR_CODES[exception_msg])
+                return True
+        logger.error(
+            "Exception on add_video. User id %d Pack %s", user_id, pack_name,
         )
         logger.error(exc)
         return False
@@ -428,6 +470,8 @@ def get_msg_type(message: Message):
 
     if message.photo is not None and len(message.photo) > 0:
         msg_type = MsgType.PHOTO
+    elif message.video is not None:
+        msg_type = MsgType.VIDEO
     elif message.sticker is not None:
         msg_type = MsgType.STICKER
     elif message.document is not None:
