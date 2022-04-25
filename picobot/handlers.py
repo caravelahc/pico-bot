@@ -176,6 +176,9 @@ def add_sticker(update: Update, context: CallbackContext):
     elif msg_type in [MsgType.STICKER, MsgType.REP_STICKER]:
         if insert_sticker_in_pack(bot, msg, user_id, pack_name, emoji):
             return
+    elif msg_type in [MsgType.VIDEO_STICKER, MsgType.REP_VIDEO_STICKER]:
+        if insert_video_sticker_in_pack(bot, msg, user_id, pack_name, emoji):
+            return
 
     # check for errors
 
@@ -357,6 +360,33 @@ def insert_sticker_in_pack(bot: Bot, msg: Message, user_id: int, pack_name: str,
     return True
 
 
+def insert_video_sticker_in_pack(bot: Bot, msg: Message, user_id: int, pack_name: str, emoji: str):
+    sticker_id = msg.reply_to_message.sticker.file_id
+
+    video_path = VID_DIR / f'{VIDEO_PREFIX}{user_id}.webm'
+    try:
+        sticker_file = bot.get_file(sticker_id)
+        sticker_file.download(custom_path=str(video_path))
+        with open(video_path, 'rb') as webm_sticker:
+            bot.add_sticker_to_set(
+                user_id=user_id, name=pack_name, webm_sticker=webm_sticker, emojis=emoji
+            )
+            sticker = bot.get_sticker_set(pack_name).stickers[-1]
+            msg.reply_sticker(sticker)
+    except Exception as exc:
+        if isinstance(exc, telegram.error.BadRequest):
+            exception_msg = exc.message.lower()
+            if exception_msg in responses.TELEGRAM_ERROR_CODES:
+                msg.reply_text(responses.TELEGRAM_ERROR_CODES[exception_msg])
+                return True
+        logger.error(
+            "Exception inserting sticker in pack. User id %d Pack %s", user_id, pack_name,
+        )
+        logger.error(exc)
+        return False
+    return True
+
+
 def del_sticker(update: Update, context: CallbackContext):
     bot = context.bot
     msg: Message = update.message
@@ -473,7 +503,10 @@ def get_msg_type(message: Message):
     elif message.video is not None:
         msg_type = MsgType.VIDEO
     elif message.sticker is not None:
-        msg_type = MsgType.STICKER
+        if message.sticker.is_video:
+            msg_type = MsgType.VIDEO_STICKER
+        else:
+            msg_type = MsgType.STICKER
     elif message.document is not None:
         msg_type = MsgType.DOCUMENT
     elif message.text is not None:

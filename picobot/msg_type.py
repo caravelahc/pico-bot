@@ -7,8 +7,10 @@ class MsgType(IntEnum):
     DOCUMENT = 3
     STICKER = 4
     VIDEO = 5
+    VIDEO_STICKER = 6
     REP_TEXT = 10
     REP_PHOTO = 20
     REP_DOCUMENT = 30
     REP_STICKER = 40
     REP_VIDEO = 50
+    REP_VIDEO_STICKER = 60
