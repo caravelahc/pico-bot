@@ -13,7 +13,7 @@ from picobot import responses
 from .config import CREATOR_ID, ROOT_DIR
 from .msg_type import MsgType
 from .painter import sticker_from_image, sticker_from_text
-from .video_editor import sticker_from_video
+from .video_editor import sticker_from_video, VideoTooLongError
 from .repository.repo import repository
 
 IMG_DIR = ROOT_DIR / 'images'
@@ -319,6 +319,9 @@ def add_video(
             sticker = bot.get_sticker_set(pack_name).stickers[-1]
             msg.reply_sticker(sticker)
     except Exception as exc:
+        if isinstance(exc, VideoTooLongError):
+            msg.reply_text(responses.VIDEO_TOO_LONG)
+            return True
         if isinstance(exc, telegram.error.BadRequest):
             exception_msg = exc.message.lower()
             if exception_msg in responses.TELEGRAM_ERROR_CODES:
