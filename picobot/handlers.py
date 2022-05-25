@@ -33,6 +33,10 @@ logger = logging.getLogger(__name__)
 DEFAULT_EMOJI = '😁'
 
 
+class FileTooLargeError(Exception):
+    pass
+
+
 def creator_only(func):
     @wraps(func)
     def new_func(bot, update, *args, **kwargs):
@@ -162,10 +166,28 @@ def add_sticker(update: Update, context: CallbackContext):
         if add_photo(bot, msg, user_id, pack_name, emoji, True):
             return
     elif msg_type == MsgType.VIDEO:
-        if add_video(bot, msg, user_id, pack_name, emoji, False):
+        media = msg.video[-1]
+        if add_video(bot, msg, media, user_id, pack_name, emoji):
             return
     elif msg_type == MsgType.REP_VIDEO:
-        if add_video(bot, msg, user_id, pack_name, emoji, True):
+        media = msg.reply_to_message.video
+        if add_video(bot, msg, media, user_id, pack_name, emoji, False):
+            return
+    elif msg_type == MsgType.VIDEO_NOTE:
+        media = msg.video_note[-1]
+        if add_video(bot, msg, media, user_id, pack_name, emoji, True):
+            return
+    elif msg_type == MsgType.REP_VIDEO_NOTE:
+        media = msg.reply_to_message.video_note
+        if add_video(bot, msg, media, user_id, pack_name, emoji, True):
+            return
+    elif msg_type == MsgType.DOCUMENT_VIDEO:
+        media = msg.document[-1]
+        if add_video(bot, msg, user_id, pack_name, emoji, False):
+            return
+    elif msg_type == MsgType.REP_DOCUMENT_VIDEO:
+        media = msg.reply_to_message.document
+        if add_video(bot, msg, user_id, pack_name, emoji, False):
             return
     elif msg_type == MsgType.DOCUMENT:
         if add_document(bot, msg, user_id, pack_name, emoji, False):
@@ -177,6 +199,7 @@ def add_sticker(update: Update, context: CallbackContext):
         if insert_sticker_in_pack(bot, msg, user_id, pack_name, emoji):
             return
     elif msg_type in [MsgType.VIDEO_STICKER, MsgType.REP_VIDEO_STICKER]:
+        media = msg.reply_to_message.document
         if insert_video_sticker_in_pack(bot, msg, user_id, pack_name, emoji):
             return
 
@@ -275,19 +298,20 @@ def add_photo(bot: Bot, msg: Message, user_id: int, pack_name: str, emoji: str, 
     return True
 
 
-def add_video(bot: Bot, msg: Message, user_id: int, pack_name: str, emoji: str, replied: bool):
-    if replied:
-        msg.reply_to_message
-        video = msg.reply_to_message.video
-    else:
-        video = msg.video[-1]
+def add_video(
+    bot: Bot, msg: Message, video, user_id: int, pack_name: str, emoji: str, circle: bool
+):
     video_path = VID_DIR / f'{VIDEO_PREFIX}{user_id}.mp4'
     try:
         if bot.get_file(video.file_id).file_size > 2172859:
-            raise Exception("File size exceeds limits")
+            msg.reply_text(responses.FILE_TOO_LARGE)
+            raise FileTooLargeError()("File size exceeds limits")
         bot.get_file(video.file_id).download(custom_path=video_path)
         # resize and save as webm
-        video_path = sticker_from_video(video_path)
+        if not circle:
+            video_path = sticker_from_video(video_path)
+        else:
+            video_path = sticker_from_video(video_path, IMG_DIR / "circle_mask.png")
         with open(video_path, 'rb') as webm_sticker:
             bot.add_sticker_to_set(
                 user_id=user_id, name=pack_name, webm_sticker=webm_sticker, emojis=emoji
@@ -508,7 +532,12 @@ def get_msg_type(message: Message):
         else:
             msg_type = MsgType.STICKER
     elif message.document is not None:
-        msg_type = MsgType.DOCUMENT
+        if message.document.mime_type == 'video/mp4':
+            msg_type = MsgType.VIDEO
+        else:
+            msg_type = MsgType.DOCUMENT
+    elif message.video_note is not None:
+        msg_type = MsgType.VIDEO_NOTE
     elif message.text is not None:
         msg_type = MsgType.TEXT
 

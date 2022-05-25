@@ -13,6 +13,8 @@ com uma camada transparente e caber em um quadrado 512x512 \
 
 ERROR_DOWNLOAD_PHOTO = "Não foi possível baixar a foto do usuário."
 
+FILE_TOO_LARGE = "O arquivo "
+
 USER_NO_PACK = "Você ainda não tem nenhum pacote de sticker. \
 Por favor, primeiro crie um utilizando o comando /newpack para criar um novo pacote de stickers."
 
