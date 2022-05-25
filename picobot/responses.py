@@ -3,6 +3,8 @@ ERROR_MSG = "Algo deu errado. Utilize o comando /help."
 TELEGRAM_ERROR_CODES = {
     'stickerpack_stickers_too_much': 'Este pack atingiu o tamanho limite permitido pelo Telegram.\nCrie um novo pack.',
     'stickers_too_much': 'Este pack atingiu o tamanho limite permitido pelo Telegram.\nCrie um novo pack.',
+    'sticker_png_nopng': 'Este pack é de imagens e não suporta este tipo de arquivo.\nPara criar pack de vídeo use\nnewvideopack [nome_do_pack]',
+    'sticker_video_nowebm': 'Este pack é de vídeos e não suporta este tipo de arquivo.\nPara criar pack de de imagens use\nnewpack [nome_do_pack]',
 }
 
 INVALID_MSG = "Mensagem inválida!"
