@@ -6,7 +6,7 @@ class VideoTooLongError(Exception):
     pass
 
 
-def sticker_from_video(video_path: Path, circle_mask: Path = None):
+def sticker_from_video(video_path: Path, circle_mask: Path = None) -> Path:
     '''
     Converts the given video to a proper format that can be uploaded as a sticker.
     Telegram accepts WEBM VP9 with a maximum size of 512x512 pixels with maximum 3 seconds duration.
@@ -22,7 +22,7 @@ def sticker_from_video(video_path: Path, circle_mask: Path = None):
     if duration > 3.0:
         raise VideoTooLongError('Video duration exceeds limits')
 
-    (width, height) = estimate_video_sticker_size(width, height)
+    width, height = estimate_video_sticker_size(width, height)
     vid_output_path = video_path.with_suffix('.webm')
     vid_filename = video_path.name
     in_file = ffmpeg.input(video_path).filter('scale', width, height)
