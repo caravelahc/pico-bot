@@ -428,7 +428,7 @@ def del_sticker(update: Update, context: CallbackContext):
 
             pack_name = build_pack_name(title, bot)
             sticker_id = bot.get_sticker_set(pack_name).stickers[pos].file_id
-        elif msg_type == MsgType.REP_STICKER:
+        elif msg_type == MsgType.REP_STICKER or msg_type == MsgType.REP_VIDEO_STICKER:
             pack_name = msg.reply_to_message.sticker.set_name
             sticker_id = msg.reply_to_message.sticker.file_id
 
