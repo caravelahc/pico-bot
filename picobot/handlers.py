@@ -183,11 +183,11 @@ def add_sticker(update: Update, context: CallbackContext):
             return
     elif msg_type == MsgType.DOCUMENT_VIDEO:
         media = msg.document[-1]
-        if add_video(bot, msg, user_id, pack_name, emoji, False):
+        if add_video(bot, msg, media, user_id, pack_name, emoji, False):
             return
     elif msg_type == MsgType.REP_DOCUMENT_VIDEO:
         media = msg.reply_to_message.document
-        if add_video(bot, msg, user_id, pack_name, emoji, False):
+        if add_video(bot, msg, media, user_id, pack_name, emoji, False):
             return
     elif msg_type == MsgType.DOCUMENT:
         if add_document(bot, msg, user_id, pack_name, emoji, False):
@@ -536,7 +536,7 @@ def get_msg_type(message: Message):
             msg_type = MsgType.STICKER
     elif message.document is not None:
         if message.document.mime_type == 'video/mp4':
-            msg_type = MsgType.VIDEO
+            msg_type = MsgType.DOCUMENT_VIDEO
         else:
             msg_type = MsgType.DOCUMENT
     elif message.video_note is not None:
