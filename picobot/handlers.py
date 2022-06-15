@@ -3,10 +3,10 @@ import os
 import shlex
 from functools import wraps
 
+import telegram
 from slugify import slugify
 from telegram import Bot, Message, Update
 from telegram.ext import CallbackContext
-import telegram
 
 from picobot import responses
 
@@ -69,14 +69,21 @@ def create_pack(update: Update, context: CallbackContext):
     # Create Pack
     try:
         bot.create_new_sticker_set(
-            user_id=user.id, name=name, title=title, png_sticker=png_sticker, emojis=emoji,
+            user_id=user.id,
+            name=name,
+            title=title,
+            png_sticker=png_sticker,
+            emojis=emoji,
         )
         sticker = bot.get_sticker_set(name).stickers[0]
         update.message.reply_sticker(sticker)
         repository().add_pack_to_user(user, name)
     except Exception as exc:
         logger.error(
-            "Exception on Create Pack. User %s (id %d) Pack %s", user.first_name, user.id, name,
+            "Exception on Create Pack. User %s (id %d) Pack %s",
+            user.first_name,
+            user.id,
+            name,
         )
 
         logger.error(exc)
@@ -178,7 +185,10 @@ def add_text(bot: Bot, msg: Message, user_id: int, pack_name: str, emoji: str):
                 msg.reply_text(responses.TELEGRAM_ERROR_CODES[exception_msg])
                 return True
         logger.error(
-            "Exception on add_text. User %s (id %d) Pack %s", username, user_id, pack_name,
+            "Exception on add_text. User %s (id %d) Pack %s",
+            username,
+            user_id,
+            pack_name,
         )
         logger.error(exc)
         return False
@@ -223,7 +233,9 @@ def add_photo(bot: Bot, msg: Message, user_id: int, pack_name: str, emoji: str, 
                 msg.reply_text(responses.TELEGRAM_ERROR_CODES[exception_msg])
                 return True
         logger.error(
-            "Exception on add_photo. User id %d Pack %s", user_id, pack_name,
+            "Exception on add_photo. User id %d Pack %s",
+            user_id,
+            pack_name,
         )
         logger.error(exc)
         return False
@@ -275,7 +287,9 @@ def insert_sticker_in_pack(bot: Bot, msg: Message, user_id: int, pack_name: str,
                 msg.reply_text(responses.TELEGRAM_ERROR_CODES[exception_msg])
                 return True
         logger.error(
-            "Exception inserting sticker in pack. User id %d Pack %s", user_id, pack_name,
+            "Exception inserting sticker in pack. User id %d Pack %s",
+            user_id,
+            pack_name,
         )
         logger.error(exc)
         return False

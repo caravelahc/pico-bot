@@ -1,26 +1,26 @@
 import textwrap
 from pathlib import Path
 
-from emoji import emoji_lis, emoji_count
+from emoji import emoji_count, emoji_lis
 from PIL import Image, ImageDraw, ImageFont
 
 from .config import ROOT_DIR
 from .geometry import (
     AVATAR_SIZE,
-    MARGIN,
-    PADDING,
-    MSG_PADDING_H,
-    MSG_PADDING_V,
-    TIME_PADDING_H,
-    TIME_PADDING_BOTTOM,
     BOX_MIN_WIDTH,
     BOX_RADIUS,
     FONT_SIZE,
     LINE_SPACE,
     LINE_WIDTH_LIMIT,
+    MARGIN,
     MAX_NUMBER_OF_LINES,
-    Point,
+    MSG_PADDING_H,
+    MSG_PADDING_V,
+    PADDING,
+    TIME_PADDING_BOTTOM,
+    TIME_PADDING_H,
     Box,
+    Point,
 )
 
 IMG_DIR = ROOT_DIR / 'images'
@@ -32,7 +32,7 @@ BOX_COLOR = "#182533"
 TITLE_COLOR = "#338cf3"
 TEXT_COLOR = "#dddddd"
 TIME_COLOR = "#6A7B8C"
-FOREGROUND_COLORS = ["#1D9BF9","#FFCC00","#F91880","#7856FF","#FF7A00","#00BA7C"]
+FOREGROUND_COLORS = ["#1D9BF9", "#FFCC00", "#F91880", "#7856FF", "#FF7A00", "#00BA7C"]
 EMOJI_JOINER = chr(0xFE0F)
 
 FONTS = {
@@ -80,7 +80,10 @@ def draw_balloon(img_draw: ImageDraw.Draw, points: Box, fill=None, width=0):
 
 
 def draw_username(
-    txt_draw: ImageDraw.ImageDraw, position: Point, username="Caravela", fill=TITLE_COLOR,
+    txt_draw: ImageDraw.ImageDraw,
+    position: Point,
+    username="Caravela",
+    fill=TITLE_COLOR,
 ):
     x0 = position.x + MSG_PADDING_H
     y0 = position.y + MSG_PADDING_V
@@ -88,7 +91,10 @@ def draw_username(
 
 
 def draw_message(
-    txt_draw: ImageDraw.ImageDraw, points: Box, text=' ', user_size=[0, 0],
+    txt_draw: ImageDraw.ImageDraw,
+    points: Box,
+    text=' ',
+    user_size=[0, 0],
 ):
     current_position = Point(
         points.top_left.x + MSG_PADDING_H,
@@ -120,13 +126,19 @@ def draw_message(
         y_displacement = txt_draw.textsize(' ', font=FONTS['normal'])[1] + LINE_SPACE
         for line in lines[:-1]:
             txt_draw.text(
-                current_position.to_tuple(), text=line, font=FONTS['normal'], fill=TEXT_COLOR,
+                current_position.to_tuple(),
+                text=line,
+                font=FONTS['normal'],
+                fill=TEXT_COLOR,
             )
             current_position.x = points.top_left.x + MSG_PADDING_H
             current_position.y += y_displacement
         text = lines[-1]
         txt_draw.text(
-            current_position.to_tuple(), text=text, font=FONTS['normal'], fill=TEXT_COLOR,
+            current_position.to_tuple(),
+            text=text,
+            font=FONTS['normal'],
+            fill=TEXT_COLOR,
         )
         displacement = txt_draw.textsize(text, font=FONTS['normal'])
         current_position.x += displacement[0]
@@ -152,7 +164,12 @@ def draw_time(txt_draw: ImageDraw.ImageDraw, points: Box, text="04:20"):
 
 
 def draw_avatar(
-    img: Image, draw: ImageDraw.ImageDraw, username: str, points_balloon: Box, avatar_path: str, background_color: str
+    img: Image,
+    draw: ImageDraw.ImageDraw,
+    username: str,
+    points_balloon: Box,
+    avatar_path: str,
+    background_color: str,
 ):
     y0 = points_balloon.bottom_right.y - AVATAR_SIZE
     y1 = points_balloon.bottom_right.y
@@ -163,7 +180,11 @@ def draw_avatar(
         draw.ellipse(points.to_list(), fill=background_color)
         avatar_center = points.center().to_tuple()
         draw.text(
-            avatar_center, username[0], anchor='mm', font=FONTS['avatar'], fill='#FFFFFF',
+            avatar_center,
+            username[0],
+            anchor='mm',
+            font=FONTS['avatar'],
+            fill='#FFFFFF',
         )
         return
 
@@ -183,7 +204,9 @@ def draw_avatar(
     img.paste(tmp, mask=avatar_mask)
 
 
-def sticker_from_text(user_id: int, username: str, text: str, avatar_path: str, msg_time: str, other_user_id: int):
+def sticker_from_text(
+    user_id: int, username: str, text: str, avatar_path: str, msg_time: str, other_user_id: int
+):
     '''
     Creates an image from a text message, emulating Telegram's message layout/design.
     '''
@@ -227,7 +250,14 @@ def sticker_from_text(user_id: int, username: str, text: str, avatar_path: str, 
     img = Image.new("RGBA", size, transparent)
     dr = ImageDraw.Draw(img)
     user_color = get_user_color(other_user_id)
-    draw_avatar(img, dr, username, points_balloon=points_balloon, avatar_path=avatar_path, background_color=user_color)
+    draw_avatar(
+        img,
+        dr,
+        username,
+        points_balloon=points_balloon,
+        avatar_path=avatar_path,
+        background_color=user_color,
+    )
 
     draw_balloon(dr, points=points_balloon, fill=BOX_COLOR)
 
