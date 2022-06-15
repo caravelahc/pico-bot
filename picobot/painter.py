@@ -1,5 +1,6 @@
 import textwrap
 from pathlib import Path
+from typing import List, Optional
 
 from emoji import emoji_count, emoji_lis
 from PIL import Image, ImageDraw, ImageFont
@@ -93,9 +94,11 @@ def draw_username(
 def draw_message(
     txt_draw: ImageDraw.ImageDraw,
     points: Box,
-    text=' ',
-    user_size=[0, 0],
-):
+    text: str = ' ',
+    user_size: Optional[List[int]] = None,
+) -> None:
+    user_size = [0, 0] if user_size is None else user_size
+
     current_position = Point(
         points.top_left.x + MSG_PADDING_H,
         points.top_left.y + MSG_PADDING_V + user_size[1] + LINE_SPACE,
@@ -278,8 +281,11 @@ def wrapped_text(text: str, line_width=25, max_lines=None):
 
 def try_better_aspect_ratio(img: ImageDraw, original_text: str, modified_text: str):
     '''
-    If the message text is too long, wrapping it in 25 character lines will result in an image with a big height and small width, making it difficult to read when resized to Telegram's limit of 512px.
-    So if the wrapped text has a height more than two times its width, we increase the line width limit and re-wrap it until we get an aspect ratio closer to 1:1.
+    If the message text is too long, wrapping it in 25 character lines will
+    result in an image with a big height and small width, making it difficult
+    to read when resized to Telegram's limit of 512px. So if the wrapped text
+    has a height more than two times its width, we increase the line width
+    limit and re-wrap it until we get an aspect ratio closer to 1:1.
     '''
     line_width = LINE_WIDTH_LIMIT
     text_size = img.multiline_textsize(modified_text, font=FONTS['normal'])

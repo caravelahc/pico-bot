@@ -1,6 +1,5 @@
 import os
 import pickle
-import time
 
 from .user_entity import UserEntity
 
