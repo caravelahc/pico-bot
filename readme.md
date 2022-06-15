@@ -12,7 +12,7 @@ Feito por [@diogojs](https://t.me/diogojs) e [@caravelahc](https://t.me/caravela
 
 ### A.1) Python
 
-Tenha certeza que possui o Python com versão maior ou igual à 3.7.0. 
+Tenha certeza que possui o Python com versão maior ou igual à 3.7.0.
 
 ### A.2) Gerenciador de pacotes `poetry`
 
@@ -53,7 +53,7 @@ Consulte o seu ID de usuário no Telegram através de um bot como o [@userinfobo
 
 ### B.3) "DB_Path"
 
-Pode deixar o valor apenas como `picobot/bot.db`. Não nos é muito interessante agora. 
+Pode deixar o valor apenas como `picobot/bot.db`. Não nos é muito interessante agora.
 
 
 ## C) Como Usar
@@ -108,3 +108,24 @@ Torna seu pack privado para edição, de forma que qualquer pessoa possa apenas 
 gcloud compute ssh <instance_name_on_gcloud>
 ```
 
+## E) Para colaborar no projeto:
+
+### E.1) Instale as dependências com o `poetry`:
+
+Execute o comando
+
+```
+poetry install
+```
+
+para criar o ambiente e instalar as dependências.
+
+### E.2) Instale os hooks de `pre-commit`:
+
+Execute
+
+```
+pre-commit install
+```
+
+para instalar os hooks que checam a formatação do código e rodam os programas de análise estática.
