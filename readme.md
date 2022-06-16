@@ -129,3 +129,13 @@ pre-commit install
 ```
 
 para instalar os hooks que checam a formatação do código e rodam os programas de análise estática.
+
+### E.3) Após fazer modificações, execute os testes:
+
+Execute
+
+```
+summon test
+```
+
+para garantir que nenhum teste deixou de rodar corretamente.
