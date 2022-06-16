@@ -1,6 +1,7 @@
 import textwrap
+from dataclasses import astuple
 from pathlib import Path
-from typing import List, Optional
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from emoji import emoji_count, emoji_lis
 from PIL import Image, ImageDraw, ImageFont
@@ -45,17 +46,17 @@ FONTS = {
 }
 
 
-def draw_balloon(img_draw: ImageDraw.Draw, points: Box, fill=None, width=0):
+def draw_balloon(img_draw: ImageDraw.ImageDraw, points: Box, fill=None, width=0):
     r_x0 = points.top_left.x
     r_y0 = points.top_left.y + BOX_RADIUS
     r_x1 = points.bottom_right.x
     r_y1 = points.bottom_right.y - BOX_RADIUS
-    img_draw.rectangle([r_x0, r_y0, r_x1, r_y1], fill=fill, width=width)
+    img_draw.rectangle((r_x0, r_y0, r_x1, r_y1), fill=fill, width=width)
     r_x0 = points.top_left.x + BOX_RADIUS
     r_y0 = points.top_left.y
     r_x1 = points.bottom_right.x - BOX_RADIUS
     r_y1 = points.bottom_right.y
-    img_draw.rectangle([r_x0, r_y0, r_x1, r_y1], fill=fill, width=width)
+    img_draw.rectangle((r_x0, r_y0, r_x1, r_y1), fill=fill, width=width)
     diam = 2 * BOX_RADIUS
     c_x0 = points.top_left.x
     c_y0 = points.top_left.y
@@ -95,7 +96,7 @@ def draw_message(
     txt_draw: ImageDraw.ImageDraw,
     points: Box,
     text: str = ' ',
-    user_size: Optional[List[int]] = None,
+    user_size: Optional[Sequence[int]] = None,
 ) -> None:
     user_size = [0, 0] if user_size is None else user_size
 
@@ -103,7 +104,7 @@ def draw_message(
         points.top_left.x + MSG_PADDING_H,
         points.top_left.y + MSG_PADDING_V + user_size[1] + LINE_SPACE,
     )
-    emoji_locations = emoji_lis(text)
+    emoji_locations: List[Dict[str, Any]] = emoji_lis(text)  # type: ignore
     indexes = [0]
 
     # Some complex emojis use \u200d as a zero-width character to join two emojis into one
@@ -129,7 +130,7 @@ def draw_message(
         y_displacement = txt_draw.textsize(' ', font=FONTS['normal'])[1] + LINE_SPACE
         for line in lines[:-1]:
             txt_draw.text(
-                current_position.to_tuple(),
+                astuple(current_position),  # type: ignore
                 text=line,
                 font=FONTS['normal'],
                 fill=TEXT_COLOR,
@@ -138,7 +139,7 @@ def draw_message(
             current_position.y += y_displacement
         text = lines[-1]
         txt_draw.text(
-            current_position.to_tuple(),
+            astuple(current_position),  # type: ignore
             text=text,
             font=FONTS['normal'],
             fill=TEXT_COLOR,
@@ -160,14 +161,14 @@ def draw_message(
 
 
 def draw_time(txt_draw: ImageDraw.ImageDraw, points: Box, text="04:20"):
-    tw = txt_draw.textsize(text, font=FONTS['time'])
-    x0 = points.bottom_right.x - TIME_PADDING_H - tw[0]
-    y0 = points.bottom_right.y - (TIME_PADDING_BOTTOM + tw[1])
+    text_size = txt_draw.textsize(text, font=FONTS['time'])
+    x0 = points.bottom_right.x - TIME_PADDING_H - text_size[0]
+    y0 = points.bottom_right.y - (TIME_PADDING_BOTTOM + text_size[1])
     txt_draw.text((x0, y0), text, font=FONTS['time'], fill=TIME_COLOR)
 
 
 def draw_avatar(
-    img: Image,
+    img: Image.Image,
     draw: ImageDraw.ImageDraw,
     username: str,
     points_balloon: Box,
@@ -177,13 +178,14 @@ def draw_avatar(
     y0 = points_balloon.bottom_right.y - AVATAR_SIZE
     y1 = points_balloon.bottom_right.y
     points = Box(MARGIN, y0, MARGIN + AVATAR_SIZE, y1)
-    box_position = tuple(a - 2 for a in points.top_left.to_tuple())
+    left, top = astuple(points.top_left)
+    box_position = (left - 2, top - 2)
     size = AVATAR_SIZE + 4
     if avatar_path == '':
         draw.ellipse(points.to_list(), fill=background_color)
-        avatar_center = points.center().to_tuple()
+        avatar_center = astuple(points.center())
         draw.text(
-            avatar_center,
+            avatar_center,  # type: ignore
             username[0],
             anchor='mm',
             font=FONTS['avatar'],
@@ -251,22 +253,22 @@ def sticker_from_text(
     points_balloon = Box(x0, PADDING, x1, y1)
 
     img = Image.new("RGBA", size, transparent)
-    dr = ImageDraw.Draw(img)
+    drawer = ImageDraw.Draw(img)
     user_color = get_user_color(other_user_id)
     draw_avatar(
         img,
-        dr,
+        drawer,
         username,
         points_balloon=points_balloon,
         avatar_path=avatar_path,
         background_color=user_color,
     )
 
-    draw_balloon(dr, points=points_balloon, fill=BOX_COLOR)
+    draw_balloon(drawer, points=points_balloon, fill=BOX_COLOR)
 
-    draw_username(dr, position=points_balloon.top_left, username=username, fill=user_color)
-    draw_message(dr, points=points_balloon, text=final_text, user_size=title_size)
-    draw_time(dr, text=msg_time, points=points_balloon)
+    draw_username(drawer, position=points_balloon.top_left, username=username, fill=user_color)
+    draw_message(drawer, points=points_balloon, text=final_text, user_size=title_size)
+    draw_time(drawer, text=msg_time, points=points_balloon)
 
     img = resize_to_sticker_limits(img)
     img_path = IMG_DIR / f'{IMG_PREFIX}{user_id}.png'
@@ -279,7 +281,7 @@ def wrapped_text(text: str, line_width=25, max_lines=None):
     return '\n'.join(textwrap.wrap(text, width=line_width, max_lines=max_lines))
 
 
-def try_better_aspect_ratio(img: ImageDraw, original_text: str, modified_text: str):
+def try_better_aspect_ratio(img: ImageDraw.ImageDraw, original_text: str, modified_text: str):
     '''
     If the message text is too long, wrapping it in 25 character lines will
     result in an image with a big height and small width, making it difficult
@@ -313,7 +315,7 @@ def sticker_from_image(jpg_path: Path):
     return img_path
 
 
-def resize_to_sticker_limits(img: Image):
+def resize_to_sticker_limits(img: Image.Image):
     '''
     Resizes the image to fit Telegram restrictions (maximum size of 512x512 pixels), keeping its aspect ratio.
     '''
@@ -326,7 +328,7 @@ def resize_to_sticker_limits(img: Image):
     return img
 
 
-def generate_avatar_mask(img_size: tuple, points: Box):
+def generate_avatar_mask(img_size: Tuple[int, int], points: Box):
     img = Image.new("RGBA", img_size, (0, 0, 0, 0))
     maskdraw = ImageDraw.Draw(img)
     maskdraw.ellipse(points.to_list(), fill='#FFFFFF')

@@ -9,7 +9,7 @@ try:
 except KeyError:
     CONFIG_DIR = Path.home() / '.config' / 'picobot'
 
-with open(CONFIG_DIR / 'config.json') as f:
+with open(CONFIG_DIR / 'config.json', encoding='utf8') as f:
     config = json.load(f)
 
 TOKEN = config['token']
