@@ -22,9 +22,6 @@ class Point:
     x: int
     y: int
 
-    def to_tuple(self):
-        return (self.x, self.y)
-
 
 @dataclass
 class Box:

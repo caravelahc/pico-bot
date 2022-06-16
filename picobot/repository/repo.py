@@ -1,23 +1,17 @@
 import os
 import pickle
-import time
+from typing import Dict, Optional, Set
 
 from .user_entity import UserEntity
 
 
-def repository(database_path: str = None):
-    if Repo.instance is None:
-        Repo.instance = Repo(database_path)
-    return Repo.instance
-
-
-class Repo(object):
-    instance = None
+class Repo:
+    instance: Optional['Repo'] = None
 
     def __init__(self, database_path: str = None):
         self._db = ''
-        self._users = {}
-        self._public_packs = set()
+        self._users: Dict[int, UserEntity] = {}
+        self._public_packs: Set[str] = set()
 
         if database_path is not None:
             self._load_db(database_path)
@@ -50,14 +44,18 @@ class Repo(object):
     def _load_db(self, db_path: str):
         self._db = db_path
         if os.path.exists(db_path):
-            fp = open(db_path, 'rb')
-            data = pickle.load(fp)
-            self._users = data['users']
-            self._public_packs = data['packs']
-            fp.close()
+            with open(db_path, 'rb') as db_file:
+                data = pickle.load(db_file)
+                self._users = data['users']
+                self._public_packs = data['packs']
 
     def _update_db(self):
         data = {'users': self._users, 'packs': self._public_packs}
-        fp = open(self._db, 'wb')
-        pickle.dump(data, fp)
-        fp.close()
+        with open(self._db, 'rb') as db_file:
+            pickle.dump(data, db_file)
+
+
+def repository(database_path: str = None) -> Repo:
+    if Repo.instance is None:
+        Repo.instance = Repo(database_path)
+    return Repo.instance

@@ -1,8 +1,12 @@
 ERROR_MSG = "Algo deu errado. Utilize o comando /help."
 
 TELEGRAM_ERROR_CODES = {
-    'stickerpack_stickers_too_much': 'Este pack atingiu o tamanho limite permitido pelo Telegram.\nCrie um novo pack.',
-    'stickers_too_much': 'Este pack atingiu o tamanho limite permitido pelo Telegram.\nCrie um novo pack.',
+    'stickerpack_stickers_too_much': (
+        'Este pack atingiu o tamanho limite permitido pelo Telegram.\n Crie um novo pack.'
+    ),
+    'stickers_too_much': (
+        'Este pack atingiu o tamanho limite permitido pelo Telegram.\n Crie um novo pack.'
+    ),
 }
 
 INVALID_MSG = "Mensagem inválida!"
@@ -53,7 +57,9 @@ em resposta a uma imagem/mensagem para criar um novo sticker, \
 ou como resposta a um sticker existente para apenas adicioná-lo ao pack.
     /delsticker <NomeDoPack> <Posição> - remove o sticker do pack (não recuperável)
     /setdefaultpack <NomeDoPack> - configura seu pack padrão
-    /setpublic <NomeDoPack> - torna seu pack público (qualquer pessoa pode editá-lo, adicionar e remover stickers)
-    /setprivate <NomeDoPack> - torna seu pack privado para edição (qualquer pessoa ainda pode visualizá-lo e utilizá-lo)
+    /setpublic <NomeDoPack> - torna seu pack público (qualquer pessoa pode editá-lo, \
+adicionar e remover stickers)
+    /setprivate <NomeDoPack> - torna seu pack privado para edição (qualquer pessoa ainda pode \
+visualizá-lo e utilizá-lo)
 
     Para utilizar espaços no nome do pacote, escreva-o entre aspas simples ou duplas."""
