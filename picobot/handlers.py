@@ -2,6 +2,7 @@ import logging
 import os
 import shlex
 from functools import wraps
+from pathlib import Path
 
 from slugify import slugify
 from telegram import Bot, Message, Update
@@ -16,8 +17,7 @@ from .painter import sticker_from_image, sticker_from_text
 from .video_editor import sticker_from_video, VideoTooLongError
 from .repository.repo import repository
 
-IMG_DIR = ROOT_DIR / 'images'
-VID_DIR = ROOT_DIR / 'videos'
+MEDIA_DIR = ROOT_DIR / 'media'
 IMG_PREFIX = 'img'
 VIDEO_PREFIX = 'vid'
 AVATAR_PREFIX = 'avatar'
@@ -53,12 +53,12 @@ def build_pack_name(title: str, bot: Bot) -> str:
     return f'{slug}_by_{bot.username}'
 
 
-def start(update: Update, context: CallbackContext):
+def start(update: Update, context: CallbackContext) -> None:
     """Send a message when the command /start is issued."""
     update.message.reply_text(responses.GREETING)
 
 
-def create_pack(update: Update, context: CallbackContext):
+def create_pack(update: Update, context: CallbackContext) -> None:
     bot = context.bot
     user = update.message.from_user
 
@@ -70,20 +70,27 @@ def create_pack(update: Update, context: CallbackContext):
 
     title = splittext[1]
     name = build_pack_name(title, bot)
-    png_sticker = open(IMG_DIR / 'caravela.png', 'rb')
+    png_sticker = open(MEDIA_DIR / 'caravela.png', 'rb')
     emoji = splittext[2] if len(splittext) > 2 else DEFAULT_EMOJI
 
     # Create Pack
     try:
         bot.create_new_sticker_set(
-            user_id=user.id, name=name, title=title, png_sticker=png_sticker, emojis=emoji,
+            user_id=user.id,
+            name=name,
+            title=title,
+            png_sticker=png_sticker,
+            emojis=emoji,
         )
         sticker = bot.get_sticker_set(name).stickers[0]
         update.message.reply_sticker(sticker)
         repository().add_pack_to_user(user, name)
     except Exception as exc:
         logger.error(
-            "Exception on Create Pack. User %s (id %d) Pack %s", user.first_name, user.id, name,
+            "Exception on Create Pack. User %s (id %d) Pack %s",
+            user.first_name,
+            user.id,
+            name,
         )
 
         logger.error(exc)
@@ -91,7 +98,7 @@ def create_pack(update: Update, context: CallbackContext):
     png_sticker.close()
 
 
-def create_video_pack(update: Update, context: CallbackContext):
+def create_video_pack(update: Update, context: CallbackContext) -> None:
     bot = context.bot
     user = update.message.from_user
 
@@ -103,27 +110,34 @@ def create_video_pack(update: Update, context: CallbackContext):
 
     title = splittext[1]
     name = build_pack_name(title, bot)
-    with open(VID_DIR / 'caravela.webm', 'rb') as webm_sticker:
+    with open(MEDIA_DIR / 'caravela.webm', 'rb') as webm_sticker:
         emoji = splittext[2] if len(splittext) > 2 else DEFAULT_EMOJI
 
         # Create Video Pack
         try:
             bot.create_new_sticker_set(
-                user_id=user.id, name=name, title=title, webm_sticker=webm_sticker, emojis=emoji,
+                user_id=user.id,
+                name=name,
+                title=title,
+                webm_sticker=webm_sticker,
+                emojis=emoji,
             )
             sticker = bot.get_sticker_set(name).stickers[0]
             update.message.reply_sticker(sticker)
             repository().add_pack_to_user(user, name)
         except Exception as exc:
             logger.error(
-                "Exception on Create Pack. User %s (id %d) Pack %s", user.first_name, user.id, name,
+                "Exception on Create Pack. User %s (id %d) Pack %s",
+                user.first_name,
+                user.id,
+                name,
             )
 
             logger.error(exc)
             update.message.reply_text(responses.ERROR_MSG)
 
 
-def add_sticker(update: Update, context: CallbackContext):
+def add_sticker(update: Update, context: CallbackContext) -> None:
     bot = context.bot
     msg = update.message
 
@@ -167,27 +181,27 @@ def add_sticker(update: Update, context: CallbackContext):
             return
     elif msg_type == MsgType.VIDEO:
         media = msg.video[-1]
-        if add_video(bot, msg, media, user_id, pack_name, emoji):
+        if add_video(bot, msg, media, user_id, pack_name, emoji, circle=False):
             return
     elif msg_type == MsgType.REP_VIDEO:
         media = msg.reply_to_message.video
-        if add_video(bot, msg, media, user_id, pack_name, emoji, False):
+        if add_video(bot, msg, media, user_id, pack_name, emoji, circle=False):
             return
     elif msg_type == MsgType.VIDEO_NOTE:
         media = msg.video_note[-1]
-        if add_video(bot, msg, media, user_id, pack_name, emoji, True):
+        if add_video(bot, msg, media, user_id, pack_name, emoji, circle=True):
             return
     elif msg_type == MsgType.REP_VIDEO_NOTE:
         media = msg.reply_to_message.video_note
-        if add_video(bot, msg, media, user_id, pack_name, emoji, True):
+        if add_video(bot, msg, media, user_id, pack_name, emoji, circle=True):
             return
     elif msg_type == MsgType.DOCUMENT_VIDEO:
         media = msg.document[-1]
-        if add_video(bot, msg, media, user_id, pack_name, emoji, False):
+        if add_video(bot, msg, media, user_id, pack_name, emoji, circle=False):
             return
     elif msg_type == MsgType.REP_DOCUMENT_VIDEO:
         media = msg.reply_to_message.document
-        if add_video(bot, msg, media, user_id, pack_name, emoji, False):
+        if add_video(bot, msg, media, user_id, pack_name, emoji, circle=False):
             return
     elif msg_type == MsgType.DOCUMENT:
         if add_document(bot, msg, user_id, pack_name, emoji, False):
@@ -219,14 +233,13 @@ def add_text(bot: Bot, msg: Message, user_id: int, pack_name: str, emoji: str):
         other_user_id = msg.reply_to_message.from_user.id
         msg_time = msg.reply_to_message.date.strftime('%H:%M')
     photos = bot.get_user_profile_photos(other_user_id, limit=1).photos
-    avatar_path = ''
+    avatar_path = Path('')
     try:
         photo = photos[0][0]
-        avatar_path = IMG_DIR / f'{AVATAR_PREFIX}{other_user_id}.jpg'
+        avatar_path = MEDIA_DIR / f'{AVATAR_PREFIX}{other_user_id}.jpg'
         bot.get_file(photo.file_id).download(custom_path=avatar_path)
     except Exception:
         msg.reply_text(responses.ERROR_DOWNLOAD_PHOTO)
-        avatar_path = ''
 
     text = msg.reply_to_message.text
     # save as png
@@ -238,6 +251,7 @@ def add_text(bot: Bot, msg: Message, user_id: int, pack_name: str, emoji: str):
             )
             sticker = bot.get_sticker_set(pack_name).stickers[-1]
             msg.reply_sticker(sticker)
+        img_path.unlink(missing_ok=True)
     except Exception as exc:
         if isinstance(exc, telegram.error.BadRequest):
             exception_msg = exc.message.lower()
@@ -245,16 +259,16 @@ def add_text(bot: Bot, msg: Message, user_id: int, pack_name: str, emoji: str):
                 msg.reply_text(responses.TELEGRAM_ERROR_CODES[exception_msg])
                 return True
         logger.error(
-            "Exception on add_text. User %s (id %d) Pack %s", username, user_id, pack_name,
+            "Exception on add_text. User %s (id %d) Pack %s",
+            username,
+            user_id,
+            pack_name,
         )
         logger.error(exc)
         return False
     finally:
-        if os.path.exists(img_path):
-            os.remove(img_path)
-        if os.path.exists(avatar_path):
-            os.remove(avatar_path)
-
+        img_path.unlink(missing_ok=True)
+        avatar_path.unlink(missing_ok=True)
     return True
 
 
@@ -272,17 +286,19 @@ def add_photo(bot: Bot, msg: Message, user_id: int, pack_name: str, emoji: str, 
         photo = msg.reply_to_message.photo[-1]
     else:
         photo = msg.photo[-1]
-    img_path = IMG_DIR / f'{IMG_PREFIX}{user_id}.jpg'
+    img_path = MEDIA_DIR / f'{IMG_PREFIX}{user_id}.jpg'
     try:
         bot.get_file(photo.file_id).download(custom_path=img_path)
         # resize and save as png
-        img_path = sticker_from_image(img_path)
-        with open(img_path, 'rb') as png_sticker:
+        png_path = sticker_from_image(img_path)
+        with open(png_path, 'rb') as png_sticker:
             bot.add_sticker_to_set(
                 user_id=user_id, name=pack_name, png_sticker=png_sticker, emojis=emoji
             )
             sticker = bot.get_sticker_set(pack_name).stickers[-1]
             msg.reply_sticker(sticker)
+        img_path.unlink(missing_ok=True)
+        png_path.unlink(missing_ok=True)
     except Exception as exc:
         if isinstance(exc, telegram.error.BadRequest):
             exception_msg = exc.message.lower()
@@ -290,7 +306,9 @@ def add_photo(bot: Bot, msg: Message, user_id: int, pack_name: str, emoji: str, 
                 msg.reply_text(responses.TELEGRAM_ERROR_CODES[exception_msg])
                 return True
         logger.error(
-            "Exception on add_photo. User id %d Pack %s", user_id, pack_name,
+            "Exception on add_photo. User id %d Pack %s",
+            user_id,
+            pack_name,
         )
         logger.error(exc)
         return False
@@ -299,25 +317,27 @@ def add_photo(bot: Bot, msg: Message, user_id: int, pack_name: str, emoji: str, 
 
 
 def add_video(
-    bot: Bot, msg: Message, video, user_id: int, pack_name: str, emoji: str, circle: bool
+    bot: Bot, msg: Message, video, user_id: int, pack_name: str, emoji: str, *, circle: bool
 ):
-    video_path = VID_DIR / f'{VIDEO_PREFIX}{user_id}.mp4'
+    video_path = MEDIA_DIR / f'{VIDEO_PREFIX}{user_id}.mp4'
     try:
         if bot.get_file(video.file_id).file_size > 2172859:
             msg.reply_text(responses.FILE_TOO_LARGE)
-            raise FileTooLargeError()("File size exceeds limits")
+            raise FileTooLargeError("File size exceeds limits")
         bot.get_file(video.file_id).download(custom_path=video_path)
         # resize and save as webm
         if not circle:
-            video_path = sticker_from_video(video_path)
+            webm_path = sticker_from_video(video_path)
         else:
-            video_path = sticker_from_video(video_path, IMG_DIR / "circle_mask.png")
-        with open(video_path, 'rb') as webm_sticker:
+            webm_path = sticker_from_video(video_path, MEDIA_DIR / "circle_mask.png")
+        with open(webm_path, 'rb') as webm_sticker:
             bot.add_sticker_to_set(
                 user_id=user_id, name=pack_name, webm_sticker=webm_sticker, emojis=emoji
             )
             sticker = bot.get_sticker_set(pack_name).stickers[-1]
             msg.reply_sticker(sticker)
+        video_path.unlink(missing_ok=True)
+        webm_path.unlink(missing_ok=True)
     except Exception as exc:
         if isinstance(exc, VideoTooLongError):
             msg.reply_text(responses.VIDEO_TOO_LONG)
@@ -328,7 +348,9 @@ def add_video(
                 msg.reply_text(responses.TELEGRAM_ERROR_CODES[exception_msg])
                 return True
         logger.error(
-            "Exception on add_video. User id %d Pack %s", user_id, pack_name,
+            "Exception on add_video. User id %d Pack %s",
+            user_id,
+            pack_name,
         )
         logger.error(exc)
         return False
@@ -361,18 +383,20 @@ def add_document(bot: Bot, msg: Message, user_id: int, pack_name: str, emoji: st
 def insert_sticker_in_pack(bot: Bot, msg: Message, user_id: int, pack_name: str, emoji: str):
     sticker_id = msg.reply_to_message.sticker.file_id
 
-    img_path = IMG_DIR / f'{IMG_PREFIX}{user_id}.jpg'
+    img_path = MEDIA_DIR / f'{IMG_PREFIX}{user_id}.jpg'
     try:
         sticker_file = bot.get_file(sticker_id)
         sticker_file.download(custom_path=str(img_path))
         # resize and save as png
-        img_path = sticker_from_image(img_path)
-        with open(img_path, 'rb') as png_sticker:
+        png_path = sticker_from_image(img_path)
+        with open(png_path, 'rb') as png_sticker:
             bot.add_sticker_to_set(
                 user_id=user_id, name=pack_name, png_sticker=png_sticker, emojis=emoji
             )
             sticker = bot.get_sticker_set(pack_name).stickers[-1]
             msg.reply_sticker(sticker)
+        img_path.unlink(missing_ok=True)
+        png_path.unlink(missing_ok=True)
     except Exception as exc:
         if isinstance(exc, telegram.error.BadRequest):
             exception_msg = exc.message.lower()
@@ -380,7 +404,9 @@ def insert_sticker_in_pack(bot: Bot, msg: Message, user_id: int, pack_name: str,
                 msg.reply_text(responses.TELEGRAM_ERROR_CODES[exception_msg])
                 return True
         logger.error(
-            "Exception inserting sticker in pack. User id %d Pack %s", user_id, pack_name,
+            "Exception inserting sticker in pack. User id %d Pack %s",
+            user_id,
+            pack_name,
         )
         logger.error(exc)
         return False
@@ -390,7 +416,7 @@ def insert_sticker_in_pack(bot: Bot, msg: Message, user_id: int, pack_name: str,
 def insert_video_sticker_in_pack(bot: Bot, msg: Message, user_id: int, pack_name: str, emoji: str):
     sticker_id = msg.reply_to_message.sticker.file_id
 
-    video_path = VID_DIR / f'{VIDEO_PREFIX}{user_id}.webm'
+    video_path = MEDIA_DIR / f'{VIDEO_PREFIX}{user_id}.webm'
     try:
         sticker_file = bot.get_file(sticker_id)
         sticker_file.download(custom_path=str(video_path))
@@ -407,7 +433,9 @@ def insert_video_sticker_in_pack(bot: Bot, msg: Message, user_id: int, pack_name
                 msg.reply_text(responses.TELEGRAM_ERROR_CODES[exception_msg])
                 return True
         logger.error(
-            "Exception inserting sticker in pack. User id %d Pack %s", user_id, pack_name,
+            "Exception inserting sticker in pack. User id %d Pack %s",
+            user_id,
+            pack_name,
         )
         logger.error(exc)
         return False

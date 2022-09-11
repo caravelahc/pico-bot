@@ -1,6 +1,9 @@
 from pathlib import Path
+from typing import NamedTuple
 import ffmpeg
 
+class NoVideoStreamError(Exception):
+    pass
 
 class VideoTooLongError(Exception):
     pass
@@ -15,6 +18,9 @@ def sticker_from_video(video_path: Path, circle_mask: Path = None) -> Path:
     video_stream = next(
         (stream for stream in probe['streams'] if stream['codec_type'] == 'video'), None
     )
+    if video_stream is None:
+        raise NoVideoStreamError('Video stream not found')
+
     width = int(video_stream['width'])
     height = int(video_stream['height'])
     duration = float(probe['format']['duration'])
@@ -22,42 +28,37 @@ def sticker_from_video(video_path: Path, circle_mask: Path = None) -> Path:
     if duration > 3.0:
         raise VideoTooLongError('Video duration exceeds limits')
 
-    width, height = estimate_video_sticker_size(width, height)
+    width, height = estimate_video_sticker_size(VideoSize(width, height))
     vid_output_path = video_path.with_suffix('.webm')
-    vid_filename = video_path.name
     in_file = ffmpeg.input(video_path).filter('scale', width, height)
     if circle_mask is None:
-        (
-            in_file.output(
-                filename=vid_output_path.as_posix(),
-                format='webm',
-                vcodec='libvpx-vp9',
-                pix_fmt='yuva420p',
-            ).run(overwrite_output=True)
-        )
+        in_file.output(
+            filename=vid_output_path.as_posix(),
+            format='webm',
+            vcodec='libvpx-vp9',
+            pix_fmt='yuva420p',
+        ).run(overwrite_output=True)
     else:
         mask = ffmpeg.input(circle_mask).filter('alphaextract')
-        (
-            ffmpeg.filter((in_file, mask), 'alphamerge',)
-            .output(
-                filename=vid_output_path.as_posix(),
-                format='webm',
-                vcodec='libvpx-vp9',
-                pix_fmt='yuva420p',
-            )
-            .run(overwrite_output=True)
-        )
-
+        ffmpeg.filter((in_file, mask), 'alphamerge',).output(
+            filename=vid_output_path.as_posix(),
+            format='webm',
+            vcodec='libvpx-vp9',
+            pix_fmt='yuva420p',
+        ).run(overwrite_output=True)
     return vid_output_path
 
+class VideoSize(NamedTuple):
+    width: int
+    height: int
 
-def estimate_video_sticker_size(width: int, height: int) -> tuple[int, int]:
+def estimate_video_sticker_size(candidate_size: VideoSize) -> VideoSize:
     '''
     Estimates the frame size to fit Telegram restrictions (maximum size of 512x512 pixels), keeping its aspect ratio.
     '''
-    if width >= height:
-        ratio = 512 / width
-        return (512, int(ratio * height))
+    if candidate_size.width >= candidate_size.height:
+        ratio = 512 / candidate_size.width
+        return VideoSize(512, int(ratio * candidate_size.height))
     else:
-        ratio = 512 / height
-        return (int(ratio * width), 512)
+        ratio = 512 / candidate_size.height
+        return VideoSize(int(ratio * candidate_size.width), 512)
