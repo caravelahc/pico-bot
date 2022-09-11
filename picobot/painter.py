@@ -23,7 +23,7 @@ from .geometry import (
     Box,
 )
 
-IMG_DIR = ROOT_DIR / 'images'
+MEDIA_DIR = ROOT_DIR / 'media'
 FONT_DIR = ROOT_DIR / 'fonts'
 IMG_PREFIX = 'img'
 AVATAR_MASK_NAME = 'avatar_mask.png'
@@ -236,7 +236,7 @@ def sticker_from_text(user_id: int, username: str, text: str, avatar_path: str, 
     draw_time(dr, text=msg_time, points=points_balloon)
 
     img = resize_to_sticker_limits(img)
-    img_path = IMG_DIR / f'{IMG_PREFIX}{user_id}.png'
+    img_path = MEDIA_DIR / f'{IMG_PREFIX}{user_id}.png'
     img.save(img_path)
     img.close()
     return img_path
