@@ -1,5 +1,0 @@
-{
-    "token": "Token you received from @BotFather",
-    "creator_id": "Your Telegram user id (optional)",
-    "db_path": "Path to database. Default: .config/picobot/bot.db"
-}
