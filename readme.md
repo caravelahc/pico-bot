@@ -14,23 +14,23 @@ Feito por [@diogojs](https://t.me/diogojs) e [@caravelahc](https://t.me/caravela
 
 Tenha certeza que possui o Python com versão maior ou igual à 3.7.0. 
 
-### A.2) Gerenciador de pacotes `poetry`
+### A.2) Gerenciador de pacotes `uv`
 
-Primeiro de tudo, instale o `poetry`, que é um gerenciador de pacotes e dependências do Python.
+Primeiro de tudo, instale o `uv`, que é um gerenciador de pacotes e dependências do Python.
 
 ### A.3) Dependências
 
-Para instalar as dependências do projeto, utilizamos o gerenciador de dependências `poetry`, executando o comando:
+Para instalar as dependências do projeto, utilizamos o gerenciador de dependências `uv`, executando o comando:
 ```
-poetry install
+uv sync
 ```
 
-Caso possua problemas com a instalação através do `poetry`, é possível criar um ambiente local manualmente, para que possamos instalar os pacotes sem afetar o sistema:
+Caso possua problemas com a instalação através do `uv`, é possível criar um ambiente local manualmente, para que possamos instalar os pacotes sem afetar o sistema:
 ```
 python3.7 -m venv .venv
 source .venv/bin/activate
 ```
-Estando dentro do VENV (virtual env), tente rodar novamente `poetry install`, ou instale as dependências listadas no arquivo `pyproject.toml` manualmente, com o comando:
+Estando dentro do VENV (virtual env), tente rodar novamente `uv sync`, ou instale as dependências listadas no arquivo `pyproject.toml` manualmente, com o comando:
 ```
 python3.7 -m pip install <dependencia>
 ```

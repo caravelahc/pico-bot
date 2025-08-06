@@ -1,24 +1,26 @@
-[tool.poetry]
+[project]
 name = "picobot"
 version = "0.2.0"
 description = ""
-authors = ["Arthur Mesquita Pickcius <arthur.pickcius@gmail.com>"]
+authors = [{ name = "Arthur Mesquita Pickcius", email = "arthur.pickcius@gmail.com" }]
+requires-python = ">=3.11.0, <3.12"
+dependencies = [
+    "python-telegram-bot~=13.11",
+    "dataset~=1.1",
+    "pillow~=10.3",
+    "python-slugify~=4.0",
+    "emoji>=0.6.0,<0.7",
+    "typed-ast>=1.5.2,<2",
+    "ffmpeg-python>=0.2.0,<0.3",
+]
 
-[tool.poetry.dependencies]
-python = "^3.11"
-python-telegram-bot = "^13.11"
-dataset = "^1.1"
-pillow = "^10.3"
-python-slugify = "^4.0"
-emoji = "^0.6.0"
-typed-ast = "^1.5.2"
-ffmpeg-python = "^0.2.0"
-
-[tool.poetry.group.dev.dependencies]
-pytest = "^8.1.1"
-flake8 = "^7.0.0"
-isort = "^5.13.2"
-black = "^24.3.0"
+[dependency-groups]
+dev = [
+    "pytest>=8.1.1,<9",
+    "flake8>=7.0.0,<8",
+    "isort>=5.13.2,<6",
+    "black>=24.3.0,<25",
+]
 
 [tool.black]
 skip_string_normalization = true
@@ -27,6 +29,10 @@ line_length = 100
 [tool.isort]
 profile = "hug"
 
+[tool.uv.build-backend]
+module-name = "picobot"
+module-root = ""
+
 [build-system]
-requires = ["poetry>=0.12"]
-build-backend = "poetry.masonry.api"
+requires = ["uv_build>=0.8.5,<0.9.0"]
+build-backend = "uv_build"

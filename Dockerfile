@@ -1,11 +1,11 @@
 FROM python:3.11-alpine AS builder
 
-RUN apk add poetry
+RUN apk add uv
 
 COPY . /build
 WORKDIR /build
 
-RUN poetry build --format wheel
+RUN uv sync
 
 FROM python:3.11-alpine
 
